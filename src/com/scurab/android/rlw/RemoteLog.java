@@ -31,15 +31,29 @@ public final class RemoteLog {
     private static int sDeviceID;
     private static final String DEVICE_ID = "DEVICE_ID";     
     
+    
+    /**
+     * By default resendRegistration is false
+     * @param c
+     * @param appName
+     * @param serverLocation
+     * @param resendRegistration
+     * @throws NameNotFoundException
+     * @throws MalformedURLException
+     */
+    public static void init(Context c, String appName, String serverLocation) throws NameNotFoundException, MalformedURLException{
+	init(c,appName,serverLocation,false);
+    }
     /**
      * 
      * @param c
      * @param appName - global app name for log
      * @param serverLocation ig http://myserver:8080/RemoteLogWeb/
+     * @param resendRegistration - always send registration
      * @throws NameNotFoundException
      * @throws MalformedURLException 
      */
-    public static void init(Context c, String appName, String serverLocation) throws NameNotFoundException, MalformedURLException{
+    public static void init(Context c, String appName, String serverLocation, boolean resendRegistration) throws NameNotFoundException, MalformedURLException{
 	if(sConnector != null){
 	    throw new IllegalStateException("Alreade initialized");
 	}
@@ -51,15 +65,15 @@ public final class RemoteLog {
 	sAppName = appName;
 	sConnector = new ServiceConnector(serverLocation);
 	sLogSender = new LogSender();	
-	initDevice(c);
+	initDevice(c, resendRegistration);
     }       
     
     private static Thread mRegDeviceThread = null;
     
-    private static void initDevice(final Context c){
+    private static void initDevice(final Context c, boolean resend){
 	sDeviceID = sPreferences.getInt(DEVICE_ID, 0);
 	//if devId == 0 not registered yet
-	if(sDeviceID == 0){
+	if(sDeviceID == 0 || resend){
 	    mRegDeviceThread = new Thread(new Runnable() {
 	        @Override
 	        public void run() {
@@ -143,7 +157,7 @@ public final class RemoteLog {
 	});
     }
     
-    private static String getStackTrace(Throwable ex, Throwable[] outT){
+    public static String getStackTrace(Throwable ex, Throwable[] outT){
 	StringWriter sw = new StringWriter();
 	PrintWriter pw = new PrintWriter(sw);
 	Stack<Throwable> subStack = new Stack<Throwable>();
@@ -152,8 +166,9 @@ public final class RemoteLog {
 	    subStack.push(t);
 	    t = t.getCause();
 	}
-	
-	outT[0] = subStack.peek();
+	if(outT != null && outT.length > 0){
+	    outT[0] = subStack.peek();
+	}
 	for(int i = 0;i<subStack.size();i++){
 	    t = subStack.pop();	    
 	    t.printStackTrace(pw);
