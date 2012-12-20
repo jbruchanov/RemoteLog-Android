@@ -83,9 +83,12 @@ public final class RemoteLog {
 	        	//save it
 			DeviceRespond dr = sConnector.saveDevice(d);
 			if(dr == null || dr.hasError()){
-			    throw new IllegalStateException(dr != null ? dr.getMessage() : "DeviceRespond is null");
+			    System.err.print(dr.getMessage());
+			    sDeviceID = 0;
+//			    throw new IllegalStateException(dr != null ? dr.getMessage() : "DeviceRespond is null");
+			}else{
+			    sDeviceID = dr.getContext().getDeviceID();
 			}
-			sDeviceID = dr.getContext().getDeviceID();
 			//save id to shared preferences
 			Editor e = sPreferences.edit();
 			e.putInt(DEVICE_ID, sDeviceID);
