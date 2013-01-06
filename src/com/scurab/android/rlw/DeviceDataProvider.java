@@ -12,6 +12,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.util.DisplayMetrics;
 
+import com.google.android.gcm.GCMRegistrar;
 import com.scurab.gwt.rlw.shared.model.Device;
 import com.scurab.java.rlw.Core;
 
@@ -50,7 +51,11 @@ public class DeviceDataProvider {
     }
     
     public static String getPushId(Context c){
-	return null;
+	if(GCMRegistrar.isRegisteredOnServer(c)){
+	    return GCMRegistrar.getRegistrationId(c);
+	}else{
+	    return null;
+	}
     }
     
     public static String getResolution(Context c){

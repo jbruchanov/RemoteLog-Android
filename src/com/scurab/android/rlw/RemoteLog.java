@@ -1,6 +1,5 @@
 package com.scurab.android.rlw;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.Thread.UncaughtExceptionHandler;
@@ -14,6 +13,7 @@ import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 
+import com.scurab.android.KillAppException;
 import com.scurab.gwt.rlw.shared.model.Device;
 import com.scurab.gwt.rlw.shared.model.DeviceRespond;
 import com.scurab.gwt.rlw.shared.model.LogItem;
@@ -93,7 +93,7 @@ public final class RemoteLog {
 			Editor e = sPreferences.edit();
 			e.putInt(DEVICE_ID, sDeviceID);
 			e.commit();
-		    } catch (IOException e) {
+		    } catch (Throwable e) {
 			e.printStackTrace();
 		    }
 	            //don't forget to set it null
@@ -144,16 +144,15 @@ public final class RemoteLog {
 	return sLogSender;
     }
     
-    public static void catchUncaughtErrors(){
-	final UncaughtExceptionHandler oldOne = Thread.currentThread().getUncaughtExceptionHandler(); 
-	Thread t = Thread.currentThread();
+    public static void catchUncaughtErrors(Thread t){
+	final UncaughtExceptionHandler oldOne = t.getUncaughtExceptionHandler(); 
 	t.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
 	    @Override
 	    public void uncaughtException(Thread thread, Throwable ex) {
 		Throwable[] ts = new Throwable[1];
 		String stack = getStackTrace(ex, ts);
 		LogItemBlobRequest libr = new LogItemBlobRequest(LogItemBlobRequest.MIME_TEXT_PLAIN, "fatalerror.txt", stack.getBytes());
-		RLWLog.send(this, "UncaughtException", ts[0].getMessage(), libr);
+		RLWLog.send(this, (ex instanceof KillAppException) ? "KillApp" : "UncaughtException", ts[0].getMessage(), libr);
 		sLogSender.waitForEmptyQueue();
 		oldOne.uncaughtException(thread, ex);
 	    }
