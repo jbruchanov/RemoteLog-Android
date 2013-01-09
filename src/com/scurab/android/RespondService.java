@@ -1,0 +1,27 @@
+package com.scurab.android;
+
+import android.app.IntentService;
+import android.content.Intent;
+
+import com.scurab.android.rlw.RLWLog;
+import com.scurab.gwt.rlw.shared.model.PushMessage;
+
+public class RespondService extends IntentService {
+    
+    public RespondService() {
+	super("RemoteWebLog.RespondService");
+    }
+    
+    public RespondService(String name) {
+	super(name);
+    }
+
+    @Override
+    protected void onHandleIntent(Intent intent) {
+	RLWLog.n(this, "PushRespond", getMessage(intent));
+    }
+    
+    private String getMessage(Intent i){
+	return String.format("Action:%s, Message:[%s]", i.getAction(), i.getExtras().get(PushMessage.class.getSimpleName()));
+    }
+}

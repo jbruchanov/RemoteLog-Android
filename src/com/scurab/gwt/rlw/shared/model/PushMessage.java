@@ -1,6 +1,16 @@
 package com.scurab.gwt.rlw.shared.model;
 
-public class PushMessage {
+import java.io.Serializable;
+
+public class PushMessage implements Serializable {
+    
+    
+    
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -524140627737451205L;
+    
     private String mTimeStamp;
     private String mParams;
     private String mName;

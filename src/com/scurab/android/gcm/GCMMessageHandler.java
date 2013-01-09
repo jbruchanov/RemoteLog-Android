@@ -70,7 +70,7 @@ public class GCMMessageHandler extends GCMAbstractMessageHandler {
 	String subj = (String) params.get("Title");
 	String message = (String) params.get("Message");
 	// show
-	Notification n = NotificationHelper.createSimpleNotification(context,
+	Notification n = NotificationHelper.createSimpleNotification(context, pm ,
 		subj, message);
 	NotificationManager manager = (NotificationManager) context
 		.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -93,7 +93,7 @@ public class GCMMessageHandler extends GCMAbstractMessageHandler {
 	String[] actions = (String[]) list.toArray(new String[list.size()]);
 
 	// show
-	Notification n = NotificationHelper.createQuestionNotification(context,
+	Notification n = NotificationHelper.createQuestionNotification(context,  pm ,
 		subj, message, actions);
 	NotificationManager manager = (NotificationManager) context
 		.getSystemService(Context.NOTIFICATION_SERVICE);
