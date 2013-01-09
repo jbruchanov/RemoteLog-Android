@@ -25,16 +25,19 @@ public class RLog {
     public static final int INFO = 1;
     public static final int VERBOSE = 2;
     public static final int DEBUG = 4;
-    public static final int ERROR = 8;
-    public static final int EXCEPTION = 16;
-    public static final int WTF = 32;
-    public static final int SCREENSHOT = 64;
-    public static final int ALL = INFO | VERBOSE | DEBUG | ERROR | EXCEPTION | WTF | SCREENSHOT;
+    public static final int WARNING = 8;
+    public static final int ERROR = 16;
+    public static final int EXCEPTION = 32;
+    public static final int WTF = 64;
+    public static final int SCREENSHOT = 128;
+    public static final int ALL = INFO | VERBOSE | DEBUG | WARNING | ERROR |  EXCEPTION | WTF | SCREENSHOT;
 
     private static int sMode = EXCEPTION;
+    
+    private static ILog sLog = null;
 
     public static void n(Object source, String category, String msg) {
-	if (sMode > 0) {
+	if (sMode != TURN_OFF) {
 	    send(source, category, msg);
 	}
     }
@@ -67,23 +70,23 @@ public class RLog {
 	if ((sMode ^ DEBUG) == DEBUG) {
 	    send(source, category, msg);
 	}
+	if(sLog != null){sLog.n(source, category, msg);}
     }
 
     public static void e(Object source, String msg) {
-	send(source, "Error", msg);
+	e(source, "Error", msg);
     }
 
     public static void e(Object source, String category, String msg) {
 	if ((sMode ^ ERROR) == ERROR) {
 	    send(source, category, msg);
 	}
+	if(sLog != null){sLog.n(source, category, msg);}
     }
 
     public static void e(Object source, Throwable t) {
 	if ((sMode ^ ERROR) == ERROR) {
-	    send(source, "Error", getMessageOrClassName(t),
-		    new LogItemBlobRequest("text/plain", "error.txt", RemoteLog
-			    .getStackTrace(t).getBytes()));
+	    e(source, "Error", t);
 	}
     }
 
@@ -93,6 +96,7 @@ public class RLog {
 		    new LogItemBlobRequest("text/plain", "error.txt", RemoteLog
 			    .getStackTrace(t).getBytes()));
 	}
+	if(sLog != null){sLog.e(source, category, t);}
     }
 
     private static String getMessageOrClassName(Throwable t) {
@@ -103,6 +107,17 @@ public class RLog {
 	return s;
     }
 
+    public static void w(Object source, String msg) {
+	w(source, "Warning", msg);
+    }
+
+    public static void w(Object source, String category, String msg) {
+	if ((sMode ^ WARNING) == WARNING) {
+	    send(source, category, msg);
+	}
+	if(sLog != null){sLog.w(source, category, msg);}
+    }
+    
     public static void wtf(Object source, String msg) {
 	wtf(source, "WTF", msg);
     }
@@ -111,6 +126,7 @@ public class RLog {
 	if ((sMode ^ WTF) == WTF) {
 	    send(source, category, msg);
 	}
+	if(sLog != null){sLog.wtf(source, category, msg);}
     }
 
     /**
@@ -246,5 +262,14 @@ public class RLog {
 
     public static void setMode(int sMode) {
 	RLog.sMode = sMode;
+    }
+
+    /**
+     * Set local log handler<br/>
+     * Methods will be called always, regardless on mode
+     * @param sLog
+     */
+    public static void setLog(ILog sLog) {
+	RLog.sLog = sLog;
     }
 }
