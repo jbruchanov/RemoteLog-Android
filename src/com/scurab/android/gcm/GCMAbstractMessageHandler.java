@@ -2,7 +2,7 @@ package com.scurab.android.gcm;
 
 import android.content.Context;
 
-import com.scurab.android.rlw.RLWLog;
+import com.scurab.android.rlw.RLog;
 import com.scurab.gwt.rlw.shared.model.PushMessage;
 
 abstract class GCMAbstractMessageHandler extends GCMBaseReceiver {
@@ -19,7 +19,7 @@ abstract class GCMAbstractMessageHandler extends GCMBaseReceiver {
 
     @Override
     public void onMessage(Context context, PushMessage pm) {
-	RLWLog.v(this, CATEGORY, pm.toString());
+	RLog.v(this, CATEGORY, pm.toString());
 	try {
 	    String name = pm.getName();
 	    if (KEY_ECHO.equalsIgnoreCase(name)) {
@@ -40,7 +40,7 @@ abstract class GCMAbstractMessageHandler extends GCMBaseReceiver {
 		onCustomMessage(context, pm);
 	    }
 	} catch (Exception e) {
-	    RLWLog.e(this, CATEGORY, e);
+	    RLog.e(this, CATEGORY, e);
 	    e.printStackTrace();
 	}
     }

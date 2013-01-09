@@ -18,18 +18,34 @@ import com.scurab.gwt.rlw.shared.model.Device;
 import com.scurab.gwt.rlw.shared.model.DeviceRespond;
 import com.scurab.gwt.rlw.shared.model.LogItem;
 import com.scurab.gwt.rlw.shared.model.LogItemBlobRequest;
+import com.scurab.gwt.rlw.shared.model.Settings;
+import com.scurab.gwt.rlw.shared.model.SettingsRespond;
 import com.scurab.java.rlw.ServiceConnector;
 
 public final class RemoteLog {
 
-    private static String sAppVersion;
-    private static String sAppBuild;
-    private static String sAppName;
-    private static ServiceConnector sConnector;
+    private String sAppVersion;
+    private String sAppBuild;
+    private String sAppName;
+    private ServiceConnector sConnector;
     private static LogSender sLogSender;
-    private static SharedPreferences sPreferences;
-    private static int sDeviceID;
-    private static final String DEVICE_ID = "DEVICE_ID";
+    private SharedPreferences sPreferences;
+    private int sDeviceID;
+    private final String DEVICE_ID = "DEVICE_ID";
+    private SettingsRespond mSettings;
+    private static final RemoteLog sSelf = new RemoteLog();
+
+    private RemoteLog() {
+
+    }
+    
+    /**
+     * 
+     * @return reference only if RemoteLog was initialized by init method
+     */
+    public static RemoteLog getInstance(){
+	return sLogSender != null ? sSelf : null;
+    }
 
     /**
      * By default resendRegistration is false
@@ -41,9 +57,9 @@ public final class RemoteLog {
      * @throws NameNotFoundException
      * @throws MalformedURLException
      */
-    public static void init(Context c, String appName, String serverLocation)
+    public static RemoteLog init(Context c, String appName, String serverLocation)
 	    throws NameNotFoundException, MalformedURLException {
-	init(c, appName, serverLocation, false);
+	return init(c, appName, serverLocation, false);
     }
 
     /**
@@ -58,53 +74,104 @@ public final class RemoteLog {
      * @throws NameNotFoundException
      * @throws MalformedURLException
      */
-    public static void init(Context c, String appName, String serverLocation,
+    public static RemoteLog init(Context c, String appName, String serverLocation,
 	    boolean resendRegistration) throws NameNotFoundException,
 	    MalformedURLException {
-	if (sConnector != null) {
-	    throw new IllegalStateException("Alreade initialized");
+	if(appName == null){
+	    throw new IllegalArgumentException("appName is null");
 	}
-	sPreferences = c.getSharedPreferences(RemoteLog.class.getSimpleName(),
-		Context.MODE_PRIVATE);
+	if(serverLocation == null){
+	    throw new IllegalArgumentException("serverLocation is null");
+	}
+	
+	sSelf.sPreferences = c.getSharedPreferences(
+		RemoteLog.class.getSimpleName(), Context.MODE_PRIVATE);
 
 	PackageInfo pInfo = c.getPackageManager().getPackageInfo(
 		c.getPackageName(), 0);
-	
-	sAppVersion = pInfo.versionName;
-	sAppBuild = String.valueOf(pInfo.versionCode);
-	sAppName = appName;
-	sConnector = new ServiceConnector(serverLocation);
-	sLogSender = new LogSender();
-	
-	registerDevice(c, resendRegistration);
+
+	sSelf.sAppVersion = pInfo.versionName;
+	sSelf.sAppBuild = String.valueOf(pInfo.versionCode);
+	sSelf.sAppName = appName;
+	sSelf.sConnector = new ServiceConnector(serverLocation);
+	sSelf.sLogSender = new LogSender();
+
+	sSelf.registerDevice(c, resendRegistration);
+	return sSelf;
     }
 
-    private static Thread mRegDeviceThread = null;
+    /**
+     * Load settings from server<br/>
+     * It's blocking => call it from nonMainThread
+     * 
+     * @param appName
+     * @param callback
+     * @throws IllegalStateException
+     */
+    public void loadSettings(String appName,
+	    AsyncCallback<SettingsRespond> callback)
+	    throws IllegalStateException {
+	if (sDeviceID == 0) {
+	    throw new IllegalStateException(
+		    "Device is not registered on server!");
+	}
+	try {
+	    mSettings = sConnector.loadSettings(sDeviceID, appName);
+	    onSettings(mSettings);
+	    if (callback != null) {
+		callback.call(getSettings());
+	    }
+	} catch (Exception e) {
+	    e.printStackTrace();
+	}
+    }
 
-    public static void registerDevice(final Context c, boolean resend){
+    private void onSettings(SettingsRespond resp) {
+	try {
+	    if (resp.getCount() > 0) {
+		Settings[] ss = resp.getContext();
+		for (Settings s : ss) {
+
+		}
+	    }
+
+	} catch (Exception e) {
+	    // ignore any error and let the code continue
+	    e.printStackTrace();
+	}
+    }
+
+    private static Thread sRegDeviceThread = null;
+
+    public void registerDevice(final Context c, boolean resend) {
 	registerDevice(c, resend, true);
     }
-    
-    public static void registerDevice(final Context c, boolean resend, boolean async) {
+
+    public void registerDevice(final Context c, boolean resend, boolean async) {
+	if (sRegDeviceThread != null) {
+	    return;
+	}
 	sDeviceID = sPreferences.getInt(DEVICE_ID, 0);
 	// if devId == 0 not registered yet
 	if (sDeviceID == 0 || resend) {
-	    mRegDeviceThread = new Thread(new Runnable() {
+	    sRegDeviceThread = new Thread(new Runnable() {
 		@Override
 		public void run() {
 		    initDeviceImpl(c);
+		    // don't forget to set it null
+		    sRegDeviceThread = null;
 		}
 	    }, "RemoteLog-RegisterDevice");
 	    // start
-	    if(async){
-		mRegDeviceThread.start();
-	    }else{
-		mRegDeviceThread.run();
+	    if (async) {
+		sRegDeviceThread.start();
+	    } else {
+		sRegDeviceThread.run();
 	    }
 	}
     }
 
-    private static void initDeviceImpl(Context c) {
+    private void initDeviceImpl(Context c) {
 	// get device
 	Device d = DeviceDataProvider.getDevice(c);
 	try {
@@ -122,51 +189,66 @@ public final class RemoteLog {
 	} catch (Throwable e) {
 	    e.printStackTrace();
 	}
-	// don't forget to set it null
-	mRegDeviceThread = null;
     }
 
     /**
      * Active wait to finish registration process
      */
-    public static void waitForDeviceRegistration() {
-	while (mRegDeviceThread != null) {
+    public void waitForDeviceRegistration() {
+	waitForDeviceRegistration(Integer.MIN_VALUE);
+    }
+
+    /**
+     * 
+     * @param timeOut
+     *            in milis
+     */
+    public void waitForDeviceRegistration(int timeOut) {
+	if (sRegDeviceThread != null) {
 	    try {
-		Thread.sleep(50);
+		for (int i = 0, n = timeOut / 50; i < n; i++) {
+		    Thread.sleep(50);
+		}
 	    } catch (InterruptedException e) {
+		e.printStackTrace();
+	    } catch (Exception e) {
 		e.printStackTrace();
 	    }
 	}
     }
 
-    public static boolean isDeviceRegistered() {
+    public boolean isDeviceRegistered() {
 	return sPreferences.getInt(DEVICE_ID, 0) > 0;
     }
 
-    public static int getDeviceId() {
+    public int getDeviceId() {
 	return sDeviceID;
     }
 
-    public static LogItem createLogItem() {
+    public static LogItem createLogItem() throws IllegalStateException {
+	if (sLogSender == null) {
+	    throw new IllegalStateException("Not initialized!");
+	}
 	LogItem li = new LogItem();
-	li.setDeviceID(sDeviceID);
-	li.setAppBuild(sAppBuild);
-	li.setApplication(sAppName);
-	li.setAppVersion(sAppVersion);
+	li.setDeviceID(sSelf.sDeviceID);
+	li.setAppBuild(sSelf.sAppBuild);
+	li.setApplication(sSelf.sAppName);
+	li.setAppVersion(sSelf.sAppVersion);
 	li.setDate(new Date());
 	return li;
     }
 
-    public static ServiceConnector getConnector() {
+    public ServiceConnector getConnector() {
 	return sConnector;
     }
 
-    public static LogSender getLogSender() {
-	return sLogSender;
+    protected static LogSender getLogSender() {
+	return sSelf.sLogSender;
     }
 
     /**
      * Override default UncaughtExceptionHandler
+     * 
      * @param t
      */
     public static void catchUncaughtErrors(Thread t) {
@@ -174,38 +256,47 @@ public final class RemoteLog {
 	t.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
 	    @Override
 	    public void uncaughtException(Thread thread, Throwable ex) {
-		Throwable[] ts = new Throwable[1];
-		String stack = getStackTrace(ex, ts);
-		
-		LogItemBlobRequest libr = new LogItemBlobRequest(
-			LogItemBlobRequest.MIME_TEXT_PLAIN, "fatalerror.txt",
-			stack.getBytes());
-		
-		RLWLog.send(this, (ex instanceof KillAppException) ? "KillApp"
-			: "UncaughtException", ts[0].getMessage(), libr);
-		
-		sLogSender.waitForEmptyQueue();
+		if(sLogSender == null){
+		    //not initialized => unable to send it
+		}else if ((RLog.getMode() ^ RLog.ERROR) == RLog.ERROR) {
+		    Throwable[] ts = new Throwable[1];
+		    String stack = getStackTrace(ex, ts);
+
+		    LogItemBlobRequest libr = new LogItemBlobRequest(
+			    LogItemBlobRequest.MIME_TEXT_PLAIN,
+			    "fatalerror.txt", stack.getBytes());
+
+		    RLog.send(this,
+			    (ex instanceof KillAppException) ? "KillApp"
+				    : "UncaughtException", ts[0].getMessage(),
+			    libr);
+
+		    sLogSender.waitForEmptyQueue();
+		}
 		oldOne.uncaughtException(thread, ex);
 	    }
 	});
     }
 
-    public static String getStackTrace(Throwable ex){
+    public static String getStackTrace(Throwable ex) {
 	return getStackTrace(ex, null);
     }
+
     /**
      * Get more informative stacktrace
+     * 
      * @param ex
-     * @param outT output param for reason
+     * @param outT
+     *            output param for reason
      * @return
      */
     public static String getStackTrace(Throwable ex, Throwable[] outT) {
 	StringWriter sw = new StringWriter();
 	PrintWriter pw = new PrintWriter(sw);
-	
+
 	Stack<Throwable> subStack = new Stack<Throwable>();
 	Throwable t = ex;
-	
+
 	for (int i = 0; i < 5 && t != null; i++) {
 	    subStack.push(t);
 	    t = t.getCause();
@@ -213,12 +304,33 @@ public final class RemoteLog {
 	if (outT != null && outT.length > 0) {
 	    outT[0] = subStack.peek();
 	}
-	
+
 	for (int i = 0; i < subStack.size(); i++) {
 	    t = subStack.pop();
 	    t.printStackTrace(pw);
 	    pw.println();
 	}
 	return sw.toString();
+    }
+
+    /**
+     * Get server settings
+     * 
+     * @return
+     */
+    public SettingsRespond getSettings() {
+	return mSettings;
+    }
+    
+    public void updatePushToken(String pushToken){
+	if (sDeviceID == 0) {
+	    throw new IllegalStateException(
+		    "Device is not registered on server!");
+	}
+	try {
+	    sConnector.updatePushToken(sDeviceID, pushToken);
+	} catch (Exception e) {
+	    e.printStackTrace();
+	}
     }
 }

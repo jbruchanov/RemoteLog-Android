@@ -45,7 +45,11 @@ public class PushMessage implements Serializable {
     
     @Override
     public String toString() {
-        return String.format("Name:%s, TS:%s, Context:%s, Params:%s", mName, mTimeStamp, mContext, mParams);
+	if(mContext != null && mContext.trim().length() > 0){
+	    return String.format("Name:%s, Context:%s, Params:%s", mName, mContext, mParams);
+	}else{
+	    return String.format("Name:%s, Params:%s", mName, mParams);
+	}
     }
 
     public String getContext() {

@@ -14,7 +14,7 @@ import com.scurab.android.KnowsActiveActivity;
 import com.scurab.android.Locator;
 import com.scurab.android.Locator.OnLocationListener;
 import com.scurab.android.NotificationHelper;
-import com.scurab.android.rlw.RLWLog;
+import com.scurab.android.rlw.RLog;
 import com.scurab.android.rlw.RemoteLog;
 import com.scurab.gwt.rlw.shared.model.PushMessage;
 import com.scurab.java.rlw.Core;
@@ -29,17 +29,17 @@ public class GCMMessageHandler extends GCMAbstractMessageHandler {
 
     @Override
     public void onCustomMessage(Context context, PushMessage pm) {
-	RLWLog.n(this, CATEGORY, pm.toString());
+	RLog.n(this, CATEGORY, pm.toString());
     }
 
     @Override
     public void onTakeScreenshot(Context context, PushMessage pm) {
 	Context app = context.getApplicationContext();
 	if (app instanceof KnowsActiveActivity) {
-	    RLWLog.takeScreenshot(this, KEY_TAKESCREENSHOT,
+	    RLog.takeScreenshot(this, KEY_TAKESCREENSHOT,
 		    (KnowsActiveActivity) app);
 	} else {
-	    RLWLog.e(
+	    RLog.e(
 		    this,
 		    KEY_TAKESCREENSHOT
 			    + " Application object doesn't implement KnowsActiveActivity iface!");
@@ -60,7 +60,10 @@ public class GCMMessageHandler extends GCMAbstractMessageHandler {
 
     @Override
     public void onResendRegistration(Context context, PushMessage pm) {
-	RemoteLog.registerDevice(context, true, false);
+	RemoteLog rl = RemoteLog.getInstance();
+	if(rl != null){
+	    rl.registerDevice(context, true, false);
+	}
     }
 
     @Override
@@ -109,12 +112,12 @@ public class GCMMessageHandler extends GCMAbstractMessageHandler {
     public void onLastKnonwLocation(Context context, PushMessage pm) {
 	Locator l = new Locator(context);
 	if (!l.isGeolocationEnabled()) {
-	    RLWLog.n(this, "Location", "Geolocation is disabled!");
+	    RLog.n(this, "Location", "Geolocation is disabled!");
 	} else {
 	    l.getMyLocation(new OnLocationListener() {
 		@Override
 		public void onLocationFound(String provider, Location l) {
-		    RLWLog.n(this, "Location", String.format("Provider:%s, Location:%s", provider, getLocationSring(l)));
+		    RLog.n(GCMMessageHandler.this, "Location", String.format("Provider:%s, Location:%s", provider, getLocationSring(l)));
 		}
 	    });
 	}

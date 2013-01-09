@@ -32,7 +32,7 @@ public class LogSender {
     private ServiceConnector mConnector;
     
     public LogSender(){
-	mConnector = RemoteLog.getConnector();
+	mConnector = RemoteLog.getInstance().getConnector();
 	createWorkingThread();
     }
     

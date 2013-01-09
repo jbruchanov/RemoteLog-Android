@@ -100,7 +100,10 @@ public class GCMBaseReceiver extends BroadcastReceiver {
 	// mServer.registerDevice(id);
 	setRegistrationId(context, id);
 	GCMRegistrar.setRegisteredOnServer(context, true);
-	RemoteLog.registerDevice(context, true, false);
+	RemoteLog rl = RemoteLog.getInstance();
+	if(rl != null){
+	    rl.updatePushToken(id);
+	}	
     }
 
     /**
@@ -113,13 +116,13 @@ public class GCMBaseReceiver extends BroadcastReceiver {
     protected void onUnregistered(Context context, Intent intent)
 	    throws IOException {
 	String oldid = setRegistrationId(context, null);
-	// if(!"".equals(oldid))
-	// mServer.unregisterDevice(oldid);
-	// else
 	Log.v(TAG + ".onUnregistered(..)",
 		"No ID saved, app is probably already unregistered!");
 	GCMRegistrar.setRegisteredOnServer(context, false);
-	RemoteLog.registerDevice(context, true, false);
+	RemoteLog rl = RemoteLog.getInstance();
+	if(rl != null){
+	    rl.updatePushToken("");
+	}
     }
     
     protected void onMessage(Context context, PushMessage pm) {}

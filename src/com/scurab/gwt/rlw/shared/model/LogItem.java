@@ -29,6 +29,9 @@ public class LogItem implements Serializable {
 
     @SerializedName("Category")
     private String mCategory;
+    
+    @SerializedName("Source")
+    private String mSource;
 
     @SerializedName("Message")
     private String mMessage;
@@ -109,6 +112,14 @@ public class LogItem implements Serializable {
 
     public void setDeviceID(int deviceID) {
         mDeviceID = deviceID;
+    }
+
+    public String getSource() {
+	return mSource;
+    }
+
+    public void setSource(String source) {
+	mSource = source;
     }
 
 }
