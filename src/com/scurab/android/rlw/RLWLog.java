@@ -10,22 +10,70 @@ import com.scurab.android.KnowsActiveActivity;
 import com.scurab.gwt.rlw.shared.model.LogItem;
 import com.scurab.gwt.rlw.shared.model.LogItemBlobRequest;
 
-public class RLWLog {
+public class RLWLog{
 
+    public static void n(Object source, String category, String msg) {
+	send(source, category, msg);
+    }
+    
+    public static void i(Object source, String msg) {
+	send(source, "Info", msg);
+    }
+    
+    public static void i(Object source, String category, String msg) {
+	send(source, category, msg);
+    }
+    
     public static void v(Object source, String msg) {
 	send(source, "Verbose", msg);
+    }
+    
+    public static void v(Object source, String category, String msg) {
+	send(source, category, msg);
     }
 
     public static void d(Object source, String msg) {
 	send(source, "Debug", msg);
     }
+    
+    public static void d(Object source, String category, String msg) {
+	send(source, category, msg);
+    }
 
     public static void e(Object source, String msg) {
 	send(source, "Error", msg);
     }
+    
+    public static void e(Object source, String category, String msg) {
+	send(source, category, msg);
+    }
+    
+    public static void e(Object source, Throwable t) {
+	send(source, "Error", getMessageOrClassName(t), new LogItemBlobRequest(
+		"text/plain", "error.txt", RemoteLog.getStackTrace(t)
+			.getBytes()));
+    }
+    
+    public static void e(Object source, String category, Throwable t) {
+	send(source, category, getMessageOrClassName(t), new LogItemBlobRequest(
+		"text/plain", "error.txt", RemoteLog.getStackTrace(t)
+			.getBytes()));
+    }
+    
+    private static String getMessageOrClassName(Throwable t){
+	String s = t.getMessage();
+	if(!(s != null && s.length() > 0)){
+	    s = t.getClass().getSimpleName();
+	}
+	return s;
+    }
 
     public static void wtf(Object source, String msg) {
-	send(source, "Wtf", msg);
+	send(source, "WTF", msg);
+    }
+    
+    public static void wtf(Object source, String category, String msg) {
+	send(source, category, msg);
     }
 
     /**
@@ -48,7 +96,7 @@ public class RLWLog {
 	    }
 	} catch (Exception e) {
 	    e.printStackTrace();
-	    e(RLWLog.class, String.format("takeScreenshot\n%s\n%s",
+	    e(RLWLog.class, String.format("%s\n%s",
 		    e.getMessage(), RemoteLog.getStackTrace(e, null)));
 	}
     }
@@ -110,20 +158,28 @@ public class RLWLog {
 	}
     }
 
+    /**
+     * Send custom log item
+     * @param source
+     * @param category
+     * @param msg
+     */
     public static void send(Object source, String category, String msg) {
 	send(source, category, msg, null);
     }
 
+    /**
+     * Send custim log item with blob
+     * @param source
+     * @param category
+     * @param msg
+     * @param libr
+     */
     public static void send(Object source, String category, String msg,
 	    LogItemBlobRequest libr) {
 	LogItem li = RemoteLog.createLogItem();
 	li.setCategory(category);
 	li.setMessage(msg);
-	try {
-	    RemoteLog.getLogSender().addLogItem(li, libr);
-	} catch (Exception e) {
-	    e.printStackTrace();
-	}
+	RemoteLog.getLogSender().addLogItem(li, libr);
     }
-
 }

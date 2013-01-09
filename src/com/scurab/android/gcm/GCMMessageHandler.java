@@ -1,58 +1,52 @@
 package com.scurab.android.gcm;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.content.Context;
+import android.location.Location;
 
 import com.scurab.android.KillAppException;
 import com.scurab.android.KnowsActiveActivity;
+import com.scurab.android.Locator;
+import com.scurab.android.Locator.OnLocationListener;
+import com.scurab.android.NotificationHelper;
 import com.scurab.android.rlw.RLWLog;
 import com.scurab.android.rlw.RemoteLog;
 import com.scurab.gwt.rlw.shared.model.PushMessage;
+import com.scurab.java.rlw.Core;
 
-public class GCMMessageHandler extends GCMBaseReceiver {
-
-    public static final String KEY_ECHO = "Echo";
-    public static final String KEY_NOTIFICATION = "Notification";
-    public static final String KEY_RESEND_REGISTRATION = "Resend registration";
-    public static final String KEY_KILLAPP = "Kill app";
-    public static final String KEY_TAKESCREENSHOT = "TakeScreenshot";
+/**
+ * Push message handler
+ * 
+ * @author Joe Scurab
+ * 
+ */
+public class GCMMessageHandler extends GCMAbstractMessageHandler {
 
     @Override
-    public void onMessage(Context context, PushMessage pm) {
-	RLWLog.d(this, "PushNotification:" + pm.toString());
-	try {
-	    String name = pm.getName();
-	    if (KEY_ECHO.equalsIgnoreCase(name)) {
-		onEcho(context, pm);
-	    } else if (KEY_NOTIFICATION.equalsIgnoreCase(name)) {
-		onNotification(context, pm);
-	    } else if (KEY_RESEND_REGISTRATION.equalsIgnoreCase(name)) {
-		onResendRegistration(context, pm);
-	    } else if (KEY_KILLAPP.equalsIgnoreCase(name)) {
-		onKillApp(context, pm);
-	    } else if (KEY_TAKESCREENSHOT.equalsIgnoreCase(name)) {
-		onTakeScreenshot(context, pm);
-	    } else {
-		onCustomMessage(context, pm);
-	    }
-	} catch (Exception e) {
-	    e.printStackTrace();
-	}
-    }
-
-    public void onTakeScreenshot(Context context, PushMessage pm) {	
-	Context app = context.getApplicationContext();
-	if(app instanceof KnowsActiveActivity){
-	    RLWLog.takeScreenshot(this, KEY_TAKESCREENSHOT, (KnowsActiveActivity)app);
-	}else{
-	    RLWLog.e(this, KEY_TAKESCREENSHOT + " Application object doesn't implement KnowsActiveActivity iface!");
-	}
-	
-    }
-
     public void onCustomMessage(Context context, PushMessage pm) {
-
+	RLWLog.n(this, CATEGORY, pm.toString());
     }
 
+    @Override
+    public void onTakeScreenshot(Context context, PushMessage pm) {
+	Context app = context.getApplicationContext();
+	if (app instanceof KnowsActiveActivity) {
+	    RLWLog.takeScreenshot(this, KEY_TAKESCREENSHOT,
+		    (KnowsActiveActivity) app);
+	} else {
+	    RLWLog.e(
+		    this,
+		    KEY_TAKESCREENSHOT
+			    + " Application object doesn't implement KnowsActiveActivity iface!");
+	}
+    }
+
+    @Override
     public void onKillApp(Context context, PushMessage pm) {
 	Thread t = new Thread(new Runnable() {
 	    @Override
@@ -62,18 +56,71 @@ public class GCMMessageHandler extends GCMBaseReceiver {
 	});
 	RemoteLog.catchUncaughtErrors(t);
 	t.run();
-	
     }
 
+    @Override
     public void onResendRegistration(Context context, PushMessage pm) {
-
+	RemoteLog.registerDevice(context, true, false);
     }
 
+    @Override
     public void onNotification(Context context, PushMessage pm) {
-
+	HashMap<String, Object> params = parseSimple(pm);
+	// parse
+	String subj = (String) params.get("Title");
+	String message = (String) params.get("Message");
+	// show
+	Notification n = NotificationHelper.createSimpleNotification(context,
+		subj, message);
+	NotificationManager manager = (NotificationManager) context
+		.getSystemService(Context.NOTIFICATION_SERVICE);
+	manager.notify((int) System.currentTimeMillis(), n);
     }
 
+    @Override
     public void onEcho(Context context, PushMessage pm) {
+	// not necessary, every push is logged on income
+    }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public void onQuestion(Context context, PushMessage pm) {
+	HashMap<String, Object> params = parseSimple(pm);
+	// parse
+	String subj = (String) params.get("Title");
+	String message = (String) params.get("Message");
+	List list = ((ArrayList) params.get("Actions"));
+	String[] actions = (String[]) list.toArray(new String[list.size()]);
+
+	// show
+	Notification n = NotificationHelper.createQuestionNotification(context,
+		subj, message, actions);
+	NotificationManager manager = (NotificationManager) context
+		.getSystemService(Context.NOTIFICATION_SERVICE);
+	manager.notify((int) System.currentTimeMillis(), n);
+    }
+
+    @SuppressWarnings("unchecked")
+    private HashMap<String, Object> parseSimple(PushMessage pm) {
+	return Core.GSON.fromJson(pm.getParams(), HashMap.class);
+    }
+
+    @Override
+    public void onLastKnonwLocation(Context context, PushMessage pm) {
+	Locator l = new Locator(context);
+	if (!l.isGeolocationEnabled()) {
+	    RLWLog.n(this, "Location", "Geolocation is disabled!");
+	} else {
+	    l.getMyLocation(new OnLocationListener() {
+		@Override
+		public void onLocationFound(String provider, Location l) {
+		    RLWLog.n(this, "Location", String.format("Provider:%s, Location:%s", provider, getLocationSring(l)));
+		}
+	    });
+	}
+    }
+    
+    private static String getLocationSring(Location l){
+	return String.format("lat:%s, lng:%s, alt:%s, accuracy:%s", l.getLatitude(), l.getLongitude(), l.getAltitude(), l.getAccuracy());
     }
 }

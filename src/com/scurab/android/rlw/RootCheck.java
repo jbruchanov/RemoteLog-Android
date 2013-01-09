@@ -9,6 +9,12 @@ import java.util.ArrayList;
 
 import com.scurab.android.rlw.RootCheck.ExecShell.SHELL_CMD;
 
+/**
+ * Simple help class for getting probability of rooted device<br/>
+ * Possible values [0-7], higher is higher probablity about rooted device 
+ * @author Joe Scurab
+ *
+ */
 public class RootCheck {
     
     /**
@@ -59,6 +65,7 @@ public class RootCheck {
 		return true;
 	    }
 	} catch (Exception e) {
+	    //ignore error
 	}
 
 	return false;

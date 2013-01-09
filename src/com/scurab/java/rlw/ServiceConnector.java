@@ -10,6 +10,10 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
+
 import com.scurab.gwt.rlw.shared.model.Device;
 import com.scurab.gwt.rlw.shared.model.DeviceRespond;
 import com.scurab.gwt.rlw.shared.model.LogItem;
@@ -21,10 +25,13 @@ public class ServiceConnector {
     private String mUrl;
     private static final String REGS_URL = "/regs";
     private static final String LOGS_URL = "/logs";
+    private static final String SETTINGS_URL = "/settings";
 
     private static final String HTTP_GET = "GET";
     private static final String HTTP_POST = "POST";
     private static final String HTTP_PUT = "PUT";
+    
+    private static final int TIMEOUT = 2000;
 
     public ServiceConnector(String url) throws MalformedURLException {
         if (url.endsWith("/")) {
@@ -35,6 +42,12 @@ public class ServiceConnector {
         new URL(url);
     }
 
+    /**
+     * Save device on server
+     * @param d
+     * @return
+     * @throws IOException
+     */
     public DeviceRespond saveDevice(Device... d) throws IOException {
         String url = mUrl + REGS_URL;
         String json = Core.GSON.toJson(d);
@@ -45,6 +58,12 @@ public class ServiceConnector {
         return dr;
     }
     
+    /**
+     * Save LogItem on server
+     * @param d
+     * @return
+     * @throws IOException
+     */
     public LogItemRespond saveLogItem(LogItem... d) throws IOException {
         String url = mUrl + LOGS_URL;
         String json = Core.GSON.toJson(d);
@@ -55,6 +74,13 @@ public class ServiceConnector {
         return dr;
     }
     
+    /**
+     * Save LogItemBloblRequest on server
+     * @param req
+     * @param data
+     * @return
+     * @throws IOException
+     */
     public LogItemBlobRespond saveLogItemBlob(LogItemBlobRequest req, byte[] data) throws IOException {
         String json = Core.GSON.toJson(req);
         String url = String.format("%s%s?%s",mUrl,LOGS_URL, URLEncoder.encode(json, "UTF-8"));
@@ -104,10 +130,17 @@ public class ServiceConnector {
         URL u = new URL(url);
         URLConnection connection = u.openConnection();
         HttpURLConnection hc = (HttpURLConnection) connection;
+        
+        //set timeout
+        HttpParams httpParameters = new BasicHttpParams();
+        HttpConnectionParams.setConnectionTimeout(httpParameters, TIMEOUT);
+        HttpConnectionParams.setSoTimeout(httpParameters, TIMEOUT);
+        
         hc.setDoInput(true);
         hc.setDoOutput(true);
         hc.setDefaultUseCaches(false);
         hc.setRequestMethod(httpMethod);
+        
         return hc;
     }
 

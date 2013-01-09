@@ -16,29 +16,30 @@ import com.google.android.gcm.GCMRegistrar;
 import com.scurab.gwt.rlw.shared.model.Device;
 import com.scurab.java.rlw.Core;
 
+/**
+ * Help class for getting info about device
+ * 
+ * @author Joe Scurab
+ * 
+ */
 public class DeviceDataProvider {
-    
+
     private static final String PLATFORM = "Android";
-    public static final Pattern EMAIL_ADDRESS
-    = Pattern.compile(
-        "[a-zA-Z0-9\\+\\.\\_\\%\\-\\+]{1,256}" +
-        "\\@" +
-        "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}" +
-        "(" +
-            "\\." +
-            "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}" +
-        ")+"
-    );
-    
+    public static final Pattern EMAIL_ADDRESS = Pattern
+	    .compile("[a-zA-Z0-9\\+\\.\\_\\%\\-\\+]{1,256}" + "\\@"
+		    + "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}" + "(" + "\\."
+		    + "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}" + ")+");
+
     /**
      * Get base Device info object for registration
-     * @param c 
+     * 
+     * @param c
      * @return
      */
-    public static Device getDevice(Context c){
+    public static Device getDevice(Context c) {
 	Device d = new Device();
 	d.setBrand(Build.MANUFACTURER);
-//	d.setDescription();
+	// d.setDescription();
 	d.setDetail(getDetails(c));
 	d.setDevUUID(Build.SERIAL);
 	d.setModel(Build.MODEL);
@@ -49,33 +50,45 @@ public class DeviceDataProvider {
 	d.setPushID(getPushId(c));
 	return d;
     }
-    
-    public static String getPushId(Context c){
-	if(GCMRegistrar.isRegisteredOnServer(c)){
+
+    /**
+     * Return push token if device is sucessfuly registered, otherwise null
+     * 
+     * @param c
+     * @return
+     */
+    public static String getPushId(Context c) {
+	if (GCMRegistrar.isRegisteredOnServer(c)) {
 	    return GCMRegistrar.getRegistrationId(c);
-	}else{
+	} else {
 	    return null;
 	}
     }
-    
-    public static String getResolution(Context c){
+
+    /**
+     * Returns resolution of display width x height
+     * 
+     * @param c
+     * @return
+     */
+    public static String getResolution(Context c) {
 	DisplayMetrics dm = c.getResources().getDisplayMetrics();
 	return String.format("%sx%s", dm.widthPixels, dm.heightPixels);
     }
-    
+
     /**
      * JSON serialized {@link Build}
+     * 
      * @return
      */
-    public static String getDetails(Context c){
+    public static String getDetails(Context c) {
 	HashMap<String, Object> result = new HashMap<String, Object>();
 	Field[] fields = Build.class.getDeclaredFields();
-	for(Field f : fields){
-	    try{
+	for (Field f : fields) {
+	    try {
 		result.put(f.getName(), String.valueOf(f.get(null)));
-	    }
-	    catch(Exception e){
-		result.put(f.getName(),e.getMessage());
+	    } catch (Exception e) {
+		result.put(f.getName(), e.getMessage());
 	    }
 	}
 	result.putAll(getHardwareFeatures(c));
@@ -83,21 +96,26 @@ public class DeviceDataProvider {
 	String s = Core.GSON.toJson(result);
 	return s;
     }
-    
-    public static HashMap<String, Object> getHardwareFeatures(Context c){
+
+    /**
+     * Returns Hardware features
+     * 
+     * @param c
+     * @return
+     */
+    public static HashMap<String, Object> getHardwareFeatures(Context c) {
 	HashMap<String, Object> result = new HashMap<String, Object>();
 	PackageManager pm = c.getPackageManager();
 	Field[] fields = PackageManager.class.getDeclaredFields();
-	for(Field f : fields){
+	for (Field f : fields) {
 	    String name = f.getName();
-	    
-	    if(name.startsWith("FEATURE")){
+
+	    if (name.startsWith("FEATURE")) {
 		Object o = null;
-		try{
+		try {
 		    String value = String.valueOf(f.get(null));
 		    o = pm.hasSystemFeature(value);
-		}
-		catch(Exception e){
+		} catch (Exception e) {
 		    o = e.getMessage();
 		}
 		result.put(name, String.valueOf(o));
@@ -105,8 +123,14 @@ public class DeviceDataProvider {
 	}
 	return result;
     }
-    
-    public static HashMap<String, Object> getRuntimeInfo(Context c){
+
+    /**
+     * Returns runtime info
+     * 
+     * @param c
+     * @return
+     */
+    public static HashMap<String, Object> getRuntimeInfo(Context c) {
 	HashMap<String, Object> result = new HashMap<String, Object>();
 	Runtime r = Runtime.getRuntime();
 	result.put("MEMORY_MAX", r.maxMemory());
@@ -115,37 +139,37 @@ public class DeviceDataProvider {
 	result.put("SUPERUSER_STATUS", RootCheck.getDeviceRoot());
 	return result;
     }
-    
+
     private static int getShouldMemory(Context c) {
 	ActivityManager am = (ActivityManager) c
 		.getSystemService(Context.ACTIVITY_SERVICE);
 	int memoryClass = am.getMemoryClass();
 	return memoryClass;
     }
-    
+
     /**
-     * Needs 
+     * Needs
      * <code><uses-permission android:name="android.permission.GET_ACCOUNTS" /></code>
      * in manifest!
      * 
      * @param c
      * @return primary mail if possible, otherwise null
      */
-    public static String getOwner(Context c){
+    public static String getOwner(Context c) {
 	String result = null;
-	try{
+	try {
 	    Pattern emailPattern = EMAIL_ADDRESS; // API level 8+
 	    Account[] accounts = AccountManager.get(c).getAccounts();
 	    for (Account account : accounts) {
-	        if (emailPattern.matcher(account.name).matches()) {
-	            String possibleEmail = account.name;
-	            result = possibleEmail;
-	            break;
-	        }
+		if (emailPattern.matcher(account.name).matches()) {
+		    String possibleEmail = account.name;
+		    result = possibleEmail;
+		    break;
+		}
 	    }
-	}catch(Throwable e){
+	} catch (Throwable e) {
 	    e.printStackTrace();
 	}
 	return result;
-    }        
+    }
 }

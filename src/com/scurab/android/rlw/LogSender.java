@@ -10,13 +10,23 @@ import com.scurab.gwt.rlw.shared.model.LogItemBlobRequest;
 import com.scurab.gwt.rlw.shared.model.LogItemRespond;
 import com.scurab.java.rlw.ServiceConnector;
 
+/**
+ * Implementation for communication
+ * @author Joe Scurab
+ *
+ */
 public class LogSender {
 
+    /** Items to send **/
     private final BlockingQueue<LogItem> mItems = new ArrayBlockingQueue<LogItem>(128);
+    
+    /** Coodata for items */
     private final HashMap<LogItem, LogItemBlobRequest> mCoData = new HashMap<LogItem, LogItemBlobRequest>();
     
     private Thread mWorkingThread;
+    
     private boolean mIsRunning = true;
+    
     private boolean mPause = false;
     
     private ServiceConnector mConnector;
@@ -30,52 +40,70 @@ public class LogSender {
 	mWorkingThread = new Thread(new Runnable() {
 	    @Override
 	    public void run() {
-		while(mIsRunning){
-		    checkPause();
-		    LogItem li = null;
-		    try {
-			li = mItems.take();
-			LogItemRespond lir = mConnector.saveLogItem(li);
-			//check if there is a blob for write
-			LogItemBlobRequest blob = mCoData.get(li);
-			if(blob != null){
-			    //set logid for blob item
-			    blob.setLogItemID(lir.getContext().getID());
-			    byte[] data = blob.getData();
-			    //save data
-			    mConnector.saveLogItemBlob(blob, data);
-			}
-		    } catch (InterruptedException e) {
-			e.printStackTrace();
-		    } catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		    }
-		    //dont forget to remove co-data
-		    mCoData.remove(li);
-		}
+		workingThreadImpl();
 		mWorkingThread = null;
 	    }
 	},"LogSender");
 	mWorkingThread.start();
     }
     
+    private void workingThreadImpl(){
+	while(mIsRunning){
+	    checkPause();
+	    LogItem li = null;
+	    try {
+		li = mItems.take();
+		LogItemRespond lir = mConnector.saveLogItem(li);
+		//check if there is a blob for write
+		LogItemBlobRequest blob = mCoData.get(li);
+		if(blob != null){
+		    //set logid for blob item
+		    blob.setLogItemID(lir.getContext().getID());
+		    byte[] data = blob.getData();
+		    //save data
+		    mConnector.saveLogItemBlob(blob, data);
+		}
+	    } catch (InterruptedException e) {
+		e.printStackTrace();
+	    } catch (IOException e) {
+		e.printStackTrace();
+	    }
+	    //dont forget to remove co-data
+	    mCoData.remove(li);
+	}
+    }
+    
+    /**
+     * Check if someone paused sender
+     */
     private void checkPause() {
 	if (mPause) {
 	    synchronized (mWorkingThread) {
 		try {
 		    mWorkingThread.wait();
 		} catch (InterruptedException e) {
-
+		    //ignore waking up exception
 		}
 	    }
 	}
     }
     
+    /**
+     * Enqueue new item
+     * 
+     * @param item
+     * @return true if item is enqueued
+     */
     public boolean addLogItem(LogItem item){
 	return addLogItem(item, null);
     }
     
+    /**
+     * Enqueue new item with blob
+     * @param item
+     * @param data
+     * @return true if item is enqueued
+     */
     public boolean addLogItem(LogItem item, LogItemBlobRequest data){
 	try{
 	    if(data != null){
@@ -89,10 +117,16 @@ public class LogSender {
 	}
     }
     
+    /**
+     * Pause sending
+     */
     public void pause(){
 	mPause = true;
     }
     
+    /**
+     * Resume sending
+     */
     public void resume(){
 	mPause = false;
 	synchronized (mWorkingThread) {
@@ -100,10 +134,10 @@ public class LogSender {
 	}
     }
     
-//    public void stop(){
-//	mPause = true;
-//    }
-    
+    /**
+     * Restart sending thread<br/>
+     * @throws IllegalStateException if there is another working thread
+     */
     public void restart(){
 	if(mWorkingThread != null){
 	    throw new IllegalStateException("Another working thread is running!");
@@ -111,6 +145,9 @@ public class LogSender {
 	createWorkingThread();
     }
     
+    /**
+     * Block current thread till everything is send
+     */
     public void waitForEmptyQueue(){
 	while(mItems.size() > 0 || mCoData.size() > 0){
 	    try {

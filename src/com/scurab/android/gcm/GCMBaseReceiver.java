@@ -38,9 +38,12 @@ public class GCMBaseReceiver extends BroadcastReceiver {
     private static final String COLLAPSE_KEY = "collapse_key";
     private static final String TIMESTAMP = "timestamp";
     private static final String PARAMS = "params";
+    private static final String MESSAGECONTEXT = "context";
     
     @Override
     public void onReceive(final Context context, final Intent intent) {
+	RemoteLog.catchUncaughtErrors(Thread.currentThread());
+	
 	final String action = intent.getAction();
 	Thread t = new Thread(new Runnable() {
 	    @Override
@@ -97,6 +100,7 @@ public class GCMBaseReceiver extends BroadcastReceiver {
 	// mServer.registerDevice(id);
 	setRegistrationId(context, id);
 	GCMRegistrar.setRegisteredOnServer(context, true);
+	RemoteLog.registerDevice(context, true, false);
     }
 
     /**
@@ -115,9 +119,10 @@ public class GCMBaseReceiver extends BroadcastReceiver {
 	Log.v(TAG + ".onUnregistered(..)",
 		"No ID saved, app is probably already unregistered!");
 	GCMRegistrar.setRegisteredOnServer(context, false);
+	RemoteLog.registerDevice(context, true, false);
     }
     
-    public void onMessage(Context context, PushMessage pm) {}
+    protected void onMessage(Context context, PushMessage pm) {}
 
     /**
      * Called when new message is received
@@ -211,11 +216,16 @@ public class GCMBaseReceiver extends BroadcastReceiver {
 	if(b.containsKey(PARAMS)){
 	    params = b.getString(PARAMS);
 	}
+	String context = null;
+	if(b.containsKey(MESSAGECONTEXT)){
+	    context = b.getString(MESSAGECONTEXT);
+	}
 	
 	PushMessage pm = new PushMessage();
 	pm.setName(name);
 	pm.setTimeStamp(timeStamp);
 	pm.setParams(params);
+	pm.setContext(context);
 	
 	return pm;
     }

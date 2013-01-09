@@ -4,6 +4,7 @@ public class PushMessage {
     private String mTimeStamp;
     private String mParams;
     private String mName;
+    private String mContext;
     
     public PushMessage() {
     }
@@ -34,6 +35,14 @@ public class PushMessage {
     
     @Override
     public String toString() {
-        return String.format("Name:%s, TS:%s, Params:%s", mName, mTimeStamp, mParams);
+        return String.format("Name:%s, TS:%s, Context:%s, Params:%s", mName, mTimeStamp, mContext, mParams);
+    }
+
+    public String getContext() {
+	return mContext;
+    }
+
+    public void setContext(String context) {
+	mContext = context;
     }
 }
