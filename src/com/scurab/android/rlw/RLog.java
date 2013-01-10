@@ -94,30 +94,40 @@ public class RLog {
 	if (sMode != TURN_OFF) {
 	    send(source, category, msg);
 	}
+	if (sLog != null) {
+	    sLog.d(source, category, msg);
+	}
     }
 
     public static void i(Object source, String msg) {
-	send(source, "Info", msg);
+	i(source, "Info", msg);
+	
     }
 
     public static void i(Object source, String category, String msg) {
 	if ((sMode & INFO) == INFO) {
 	    send(source, category, msg);
 	}
+	if (sLog != null) {
+	    sLog.i(source, category, msg);
+	}
     }
 
     public static void v(Object source, String msg) {
-	send(source, "Verbose", msg);
+	v(source, "Verbose", msg);
     }
 
     public static void v(Object source, String category, String msg) {
 	if ((sMode & VERBOSE) == VERBOSE) {
 	    send(source, category, msg);
 	}
+	if (sLog != null) {
+	    sLog.v(source, category, msg);
+	}
     }
 
     public static void d(Object source, String msg) {
-	send(source, "Debug", msg);
+	d(source, "Debug", msg);
     }
 
     public static void d(Object source, String category, String msg) {
@@ -125,7 +135,7 @@ public class RLog {
 	    send(source, category, msg);
 	}
 	if (sLog != null) {
-	    sLog.n(source, category, msg);
+	    sLog.d(source, category, msg);
 	}
     }
 
@@ -138,7 +148,7 @@ public class RLog {
 	    send(source, category, msg);
 	}
 	if (sLog != null) {
-	    sLog.n(source, category, msg);
+	    sLog.e(source, category, msg);
 	}
     }
 
@@ -238,7 +248,7 @@ public class RLog {
      * @param view
      */
     public static void takeScreenshot(Object source, String msg, View view) {
-	if ((sMode & WTF) != WTF) {
+	if (sMode == TURN_OFF || (sMode & SCREENSHOT) != SCREENSHOT) {
 	    return;
 	}
 	try {
