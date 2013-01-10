@@ -12,15 +12,18 @@ import com.scurab.gwt.rlw.shared.model.LogItemBlobRequest;
 
 public class RLog {
 
+    private static final String SEPARATOR = "|";
+
     /**
      * Completely turn off remote logging<br/>
      * You should always have at least {@value RLog#EXCEPTION} for getting
      * uncought exceptions!
      */
     public static final int TURN_OFF = 0;
-    
+
     /**
-     * Allow logging via {@link RLog#v(Object, String)} and {@link RLog#v(Object, String, String))}
+     * Allow logging via {@link RLog#v(Object, String)} and
+     * {@link RLog#v(Object, String, String))}
      */
     public static final int INFO = 1;
     public static final int VERBOSE = 2;
@@ -30,10 +33,11 @@ public class RLog {
     public static final int EXCEPTION = 32;
     public static final int WTF = 64;
     public static final int SCREENSHOT = 128;
-    public static final int ALL = INFO | VERBOSE | DEBUG | WARNING | ERROR |  EXCEPTION | WTF | SCREENSHOT;
+    public static final int ALL = INFO | VERBOSE | DEBUG | WARNING | ERROR
+	    | EXCEPTION | WTF | SCREENSHOT;
 
     private static int sMode = EXCEPTION;
-    
+
     private static ILog sLog = null;
 
     public static void n(Object source, String category, String msg) {
@@ -47,7 +51,7 @@ public class RLog {
     }
 
     public static void i(Object source, String category, String msg) {
-	if ((sMode ^ INFO) == INFO) {
+	if ((sMode & INFO) == INFO) {
 	    send(source, category, msg);
 	}
     }
@@ -57,7 +61,7 @@ public class RLog {
     }
 
     public static void v(Object source, String category, String msg) {
-	if ((sMode ^ VERBOSE) == VERBOSE) {
+	if ((sMode & VERBOSE) == VERBOSE) {
 	    send(source, category, msg);
 	}
     }
@@ -67,10 +71,12 @@ public class RLog {
     }
 
     public static void d(Object source, String category, String msg) {
-	if ((sMode ^ DEBUG) == DEBUG) {
+	if ((sMode & DEBUG) == DEBUG) {
 	    send(source, category, msg);
 	}
-	if(sLog != null){sLog.n(source, category, msg);}
+	if (sLog != null) {
+	    sLog.n(source, category, msg);
+	}
     }
 
     public static void e(Object source, String msg) {
@@ -78,25 +84,29 @@ public class RLog {
     }
 
     public static void e(Object source, String category, String msg) {
-	if ((sMode ^ ERROR) == ERROR) {
+	if ((sMode & ERROR) == ERROR) {
 	    send(source, category, msg);
 	}
-	if(sLog != null){sLog.n(source, category, msg);}
+	if (sLog != null) {
+	    sLog.n(source, category, msg);
+	}
     }
 
     public static void e(Object source, Throwable t) {
-	if ((sMode ^ ERROR) == ERROR) {
+	if ((sMode & ERROR) == ERROR) {
 	    e(source, "Error", t);
 	}
     }
 
     public static void e(Object source, String category, Throwable t) {
-	if ((sMode ^ ERROR) == ERROR) {
+	if ((sMode & ERROR) == ERROR) {
 	    send(source, category, getMessageOrClassName(t),
 		    new LogItemBlobRequest("text/plain", "error.txt", RemoteLog
 			    .getStackTrace(t).getBytes()));
 	}
-	if(sLog != null){sLog.e(source, category, t);}
+	if (sLog != null) {
+	    sLog.e(source, category, t);
+	}
     }
 
     private static String getMessageOrClassName(Throwable t) {
@@ -112,21 +122,25 @@ public class RLog {
     }
 
     public static void w(Object source, String category, String msg) {
-	if ((sMode ^ WARNING) == WARNING) {
+	if ((sMode & WARNING) == WARNING) {
 	    send(source, category, msg);
 	}
-	if(sLog != null){sLog.w(source, category, msg);}
+	if (sLog != null) {
+	    sLog.w(source, category, msg);
+	}
     }
-    
+
     public static void wtf(Object source, String msg) {
 	wtf(source, "WTF", msg);
     }
 
     public static void wtf(Object source, String category, String msg) {
-	if ((sMode ^ WTF) == WTF) {
+	if ((sMode & WTF) == WTF) {
 	    send(source, category, msg);
 	}
-	if(sLog != null){sLog.wtf(source, category, msg);}
+	if (sLog != null) {
+	    sLog.wtf(source, category, msg);
+	}
     }
 
     /**
@@ -174,7 +188,7 @@ public class RLog {
      * @param view
      */
     public static void takeScreenshot(Object source, String msg, View view) {
-	if ((sMode ^ WTF) != WTF) {
+	if ((sMode & WTF) != WTF) {
 	    return;
 	}
 	try {
@@ -236,7 +250,7 @@ public class RLog {
      */
     public static void send(Object source, String category, String msg,
 	    LogItemBlobRequest libr) {
-	if(sMode == TURN_OFF){
+	if (sMode == TURN_OFF) {
 	    return;
 	}
 	LogItem li = RemoteLog.createLogItem();
@@ -267,9 +281,68 @@ public class RLog {
     /**
      * Set local log handler<br/>
      * Methods will be called always, regardless on mode
+     * 
      * @param sLog
      */
     public static void setLog(ILog sLog) {
 	RLog.sLog = sLog;
+    }
+
+    /**
+     * 
+     * @param values
+     * @return -1 if nothing interesting in string found
+     */
+    protected static int getMode(String values) {
+	int result = 0;
+	boolean found = false;
+	values = values.trim();
+	if (values != null && values.length() > 0) {
+	    int subvalue = 0;
+	    //array
+	    if (values.contains(SEPARATOR)) {
+		String[] vs = values.split("\\"+SEPARATOR);
+		for (String v : vs) {
+		    subvalue = getModeValue(v);		    
+		    if (subvalue != -1) {
+			found = true;
+			result |= subvalue;
+		    }
+		}
+	    } else {//single value
+		subvalue = getModeValue(values);
+		if (subvalue != -1) {
+		    found = true;
+		    result = subvalue;
+		}
+	    }
+	}
+	return found ? result : -1;
+    }
+
+    protected static int getModeValue(String value) {
+	int result = -1;
+	if ("TURN_OFF".equals(value)) {
+	    return TURN_OFF;
+	} else if ("INFO".equals(value)) {
+	    return INFO;
+	} else if ("VERBOSE".equals(value)) {
+	    return VERBOSE;
+	} else if ("DEBUG".equals(value)) {
+	    return DEBUG;
+	} else if ("WARNING".equals(value)) {
+	    return TURN_OFF;
+	} else if ("ERROR".equals(value)) {
+	    return ERROR;
+	} else if ("EXCEPTION".equals(value)) {
+	    return EXCEPTION;
+	} else if ("WTF".equals(value)) {
+	    return WTF;
+	} else if ("SCREENSHOT".equals(value)) {
+	    return SCREENSHOT;
+	} else if ("ALL".equals(value)) {
+	    return ALL;
+	}
+	return result;
     }
 }

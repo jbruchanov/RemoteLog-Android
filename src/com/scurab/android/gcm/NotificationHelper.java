@@ -1,4 +1,4 @@
-package com.scurab.android;
+package com.scurab.android.gcm;
 
 import android.Manifest;
 import android.R;
@@ -10,9 +10,10 @@ import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
 import android.support.v4.app.NotificationCompat;
 
+import com.scurab.android.RespondService;
 import com.scurab.gwt.rlw.shared.model.PushMessage;
 
-public class NotificationHelper {
+class NotificationHelper {
 
     private static final String CLICK = "Click";
     private static final String DELETE = "Delete";

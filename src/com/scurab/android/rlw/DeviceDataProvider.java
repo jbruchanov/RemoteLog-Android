@@ -14,7 +14,6 @@ import android.util.DisplayMetrics;
 
 import com.google.android.gcm.GCMRegistrar;
 import com.scurab.gwt.rlw.shared.model.Device;
-import com.scurab.java.rlw.Core;
 
 /**
  * Help class for getting info about device
@@ -22,7 +21,7 @@ import com.scurab.java.rlw.Core;
  * @author Joe Scurab
  * 
  */
-public class DeviceDataProvider {
+class DeviceDataProvider {
 
     private static final String PLATFORM = "Android";
     public static final Pattern EMAIL_ADDRESS = Pattern

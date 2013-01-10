@@ -1,4 +1,4 @@
-package com.scurab.java.rlw;
+package com.scurab.android.rlw;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -22,12 +22,11 @@ import com.scurab.gwt.rlw.shared.model.LogItemBlobRespond;
 import com.scurab.gwt.rlw.shared.model.LogItemRespond;
 import com.scurab.gwt.rlw.shared.model.SettingsRespond;
 
-public class ServiceConnector {
+class ServiceConnector {
     private String mUrl;
     private static final String REGS_URL = "/regs";
     private static final String LOGS_URL = "/logs";
     private static final String SETTINGS_TEMPLATE_URL = "/settings/%s/%s";
-    private static final String PUSH_UPDATE_TEMPLATE_URL = "/push/%s";
 
     private static final String HTTP_GET = "GET";
     private static final String HTTP_POST = "POST";
@@ -151,11 +150,12 @@ public class ServiceConnector {
 	HttpConnectionParams.setConnectionTimeout(httpParameters, TIMEOUT);
 	HttpConnectionParams.setSoTimeout(httpParameters, TIMEOUT);
 
-	hc.setDoInput(true);
-	hc.setDoOutput(true);
-	hc.setDefaultUseCaches(false);
 	hc.setRequestMethod(httpMethod);
-	hc.disconnect();
+	hc.setDoInput(true);
+	if(!HTTP_GET.equals(httpMethod)){
+	    hc.setDoOutput(true);
+	}
+	hc.setDefaultUseCaches(false);
 	return hc;
     }
 
@@ -175,7 +175,7 @@ public class ServiceConnector {
     public SettingsRespond loadSettings(int deviceId, String appName)
 	    throws IOException {
 	HttpURLConnection hc = openConnection(
-		String.format(SETTINGS_TEMPLATE_URL, deviceId, appName),
+		mUrl + String.format(SETTINGS_TEMPLATE_URL, deviceId, appName),
 		HTTP_GET);
 	// read response
 	String respond = read(hc.getInputStream());
@@ -188,11 +188,12 @@ public class ServiceConnector {
     public void updatePushToken(int deviceId, String pushToken)
 	    throws IOException {
 	HttpURLConnection hc = openConnection(
-		String.format(PUSH_UPDATE_TEMPLATE_URL, deviceId), HTTP_PUT);
+		mUrl + REGS_URL + "/" + deviceId, HTTP_PUT);
 	// write request
 	hc.getOutputStream().write(pushToken.getBytes());
 	hc.getOutputStream().flush();
 	// read response
+	final String respond = read(hc.getInputStream());
 	hc.disconnect();
     }
 }

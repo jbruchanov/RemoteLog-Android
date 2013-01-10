@@ -15,7 +15,7 @@ import com.scurab.android.rlw.RootCheck.ExecShell.SHELL_CMD;
  * @author Joe Scurab
  *
  */
-public class RootCheck {
+class RootCheck {
     
     /**
      * Test 3 methods about rooted device<br/>

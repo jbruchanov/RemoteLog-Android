@@ -5,6 +5,7 @@ import java.io.StringWriter;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.net.MalformedURLException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Stack;
 
 import android.content.Context;
@@ -20,7 +21,6 @@ import com.scurab.gwt.rlw.shared.model.LogItem;
 import com.scurab.gwt.rlw.shared.model.LogItemBlobRequest;
 import com.scurab.gwt.rlw.shared.model.Settings;
 import com.scurab.gwt.rlw.shared.model.SettingsRespond;
-import com.scurab.java.rlw.ServiceConnector;
 
 public final class RemoteLog {
 
@@ -54,12 +54,13 @@ public final class RemoteLog {
      * @param appName
      * @param serverLocation
      * @param resendRegistration
+     * @param {@see #RLog}
      * @throws NameNotFoundException
      * @throws MalformedURLException
      */
-    public static RemoteLog init(Context c, String appName, String serverLocation)
+    public static RemoteLog init(Context c, String appName, String serverLocation, int logMode)
 	    throws NameNotFoundException, MalformedURLException {
-	return init(c, appName, serverLocation, false);
+	return init(c, appName, serverLocation, false, logMode);
     }
 
     /**
@@ -75,7 +76,7 @@ public final class RemoteLog {
      * @throws MalformedURLException
      */
     public static RemoteLog init(Context c, String appName, String serverLocation,
-	    boolean resendRegistration) throws NameNotFoundException,
+	    boolean resendRegistration, int logMode) throws NameNotFoundException,
 	    MalformedURLException {
 	if(appName == null){
 	    throw new IllegalArgumentException("appName is null");
@@ -83,7 +84,7 @@ public final class RemoteLog {
 	if(serverLocation == null){
 	    throw new IllegalArgumentException("serverLocation is null");
 	}
-	
+	RLog.setMode(logMode);
 	sSelf.sPreferences = c.getSharedPreferences(
 		RemoteLog.class.getSimpleName(), Context.MODE_PRIVATE);
 
@@ -94,7 +95,7 @@ public final class RemoteLog {
 	sSelf.sAppBuild = String.valueOf(pInfo.versionCode);
 	sSelf.sAppName = appName;
 	sSelf.sConnector = new ServiceConnector(serverLocation);
-	sSelf.sLogSender = new LogSender();
+	sLogSender = new LogSender(sSelf.sConnector);
 
 	sSelf.registerDevice(c, resendRegistration);
 	return sSelf;
@@ -108,15 +109,19 @@ public final class RemoteLog {
      * @param callback
      * @throws IllegalStateException
      */
-    public void loadSettings(String appName,
+    public void loadSettings(
 	    AsyncCallback<SettingsRespond> callback)
 	    throws IllegalStateException {
 	if (sDeviceID == 0) {
 	    throw new IllegalStateException(
 		    "Device is not registered on server!");
 	}
+	if (sAppName == null) {
+	    throw new IllegalStateException(
+		    "Not initialized!");
+	}
 	try {
-	    mSettings = sConnector.loadSettings(sDeviceID, appName);
+	    mSettings = sConnector.loadSettings(sDeviceID, sAppName);
 	    onSettings(mSettings);
 	    if (callback != null) {
 		callback.call(getSettings());
@@ -126,20 +131,31 @@ public final class RemoteLog {
 	}
     }
 
-    private void onSettings(SettingsRespond resp) {
+    protected void onSettings(SettingsRespond resp) {
 	try {
 	    if (resp.getCount() > 0) {
 		Settings[] ss = resp.getContext();
-		for (Settings s : ss) {
-
+		//going from end, where should be device specific
+		for (int i = ss.length - 1; i >= 0; i--) {
+		    @SuppressWarnings("unchecked")
+		    HashMap<String,Object> vs = Core.GSON.fromJson(ss[i].getJsonValue(), HashMap.class);
+		    if(vs != null && vs.containsKey("RLog")){
+			String logMode = String.valueOf(vs.get("RLog"));
+			int parsed = RLog.getMode(logMode);
+			if(parsed != -1){
+			    RLog.setMode(parsed);
+			}
+			break;
+		    }
 		}
 	    }
 
 	} catch (Exception e) {
+	    RLog.e(this, e);
 	    // ignore any error and let the code continue
 	    e.printStackTrace();
 	}
-    }
+    }    
 
     private static Thread sRegDeviceThread = null;
 
@@ -147,31 +163,48 @@ public final class RemoteLog {
 	registerDevice(c, resend, true);
     }
 
-    public void registerDevice(final Context c, boolean resend, boolean async) {
+    /**
+     * register device, must be called in nonMainThread
+     * @param c
+     * @param resend
+     * @param async - to start as new Thread, if false loadSettings is not called
+     */
+    public void registerDevice(final Context c, final boolean resend,
+	    final boolean async) {
 	if (sRegDeviceThread != null) {
-	    return;
+	    throw new IllegalStateException("Register process is already running!");
 	}
-	sDeviceID = sPreferences.getInt(DEVICE_ID, 0);
-	// if devId == 0 not registered yet
-	if (sDeviceID == 0 || resend) {
-	    sRegDeviceThread = new Thread(new Runnable() {
-		@Override
-		public void run() {
-		    initDeviceImpl(c);
-		    // don't forget to set it null
-		    sRegDeviceThread = null;
+
+	sDeviceID = sPreferences.getInt(DEVICE_ID, 0);	// if devId == 0 not registered yet
+	
+	sRegDeviceThread = new Thread(new Runnable() {
+	    @Override
+	    public void run() {
+		if (sDeviceID == 0 || resend) {
+		    sendDeviceToServer(c);
 		}
-	    }, "RemoteLog-RegisterDevice");
-	    // start
-	    if (async) {
-		sRegDeviceThread.start();
-	    } else {
-		sRegDeviceThread.run();
+		
+		//run only in nonMainThread and if device is registered on server
+		if(async && sDeviceID != 0){
+		    loadSettings(null);
+		}
+		// don't forget to set it null
+		sRegDeviceThread = null;
 	    }
+	}, "RemoteLog-RegisterDevice");
+	// start
+	if (async) {
+	    sRegDeviceThread.start();
+	} else {
+	    sRegDeviceThread.run();
 	}
     }
 
-    private void initDeviceImpl(Context c) {
+    /**
+     * Must bu runned in nonMainThread
+     * @param c
+     */
+    private void sendDeviceToServer(Context c) {
 	// get device
 	Device d = DeviceDataProvider.getDevice(c);
 	try {

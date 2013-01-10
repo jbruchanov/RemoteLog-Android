@@ -11,13 +11,12 @@ import android.location.Location;
 
 import com.scurab.android.KillAppException;
 import com.scurab.android.KnowsActiveActivity;
-import com.scurab.android.Locator;
-import com.scurab.android.Locator.OnLocationListener;
-import com.scurab.android.NotificationHelper;
+import com.scurab.android.rlw.Core;
+import com.scurab.android.rlw.Locator;
+import com.scurab.android.rlw.Locator.OnLocationListener;
 import com.scurab.android.rlw.RLog;
 import com.scurab.android.rlw.RemoteLog;
 import com.scurab.gwt.rlw.shared.model.PushMessage;
-import com.scurab.java.rlw.Core;
 
 /**
  * Push message handler
@@ -125,5 +124,13 @@ public class GCMMessageHandler extends GCMAbstractMessageHandler {
     
     private static String getLocationSring(Location l){
 	return String.format("lat:%s, lng:%s, alt:%s, accuracy:%s", l.getLatitude(), l.getLongitude(), l.getAltitude(), l.getAccuracy());
+    }
+
+    @Override
+    public void onReloadSettings(Context context, PushMessage pm) {
+	RemoteLog rl = RemoteLog.getInstance();
+	if(rl != null){
+	    rl.loadSettings(null);
+	}
     }
 }

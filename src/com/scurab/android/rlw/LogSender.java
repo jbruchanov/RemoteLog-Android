@@ -8,14 +8,13 @@ import java.util.concurrent.BlockingQueue;
 import com.scurab.gwt.rlw.shared.model.LogItem;
 import com.scurab.gwt.rlw.shared.model.LogItemBlobRequest;
 import com.scurab.gwt.rlw.shared.model.LogItemRespond;
-import com.scurab.java.rlw.ServiceConnector;
 
 /**
  * Implementation for communication
  * @author Joe Scurab
  *
  */
-public class LogSender {
+class LogSender {
 
     /** Items to send **/
     private final BlockingQueue<LogItem> mItems = new ArrayBlockingQueue<LogItem>(128);
@@ -31,8 +30,8 @@ public class LogSender {
     
     private ServiceConnector mConnector;
     
-    public LogSender(){
-	mConnector = RemoteLog.getInstance().getConnector();
+    public LogSender(ServiceConnector connector){
+	mConnector = connector;
 	createWorkingThread();
     }
     

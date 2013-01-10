@@ -14,6 +14,7 @@ abstract class GCMAbstractMessageHandler extends GCMBaseReceiver {
     public static final String KEY_KILLAPP = "KillApp";
     public static final String KEY_TAKESCREENSHOT = "TakeScreenshot";
     public static final String KEY_LASTKNOWNLOCATION = "LastKnownLocation";
+    public static final String KEY_RELOADSETTINGS = "ReloadSettings";
     
     public static final String CATEGORY = "Push";
 
@@ -36,6 +37,8 @@ abstract class GCMAbstractMessageHandler extends GCMBaseReceiver {
 		onTakeScreenshot(context, pm);
 	    } else if (KEY_LASTKNOWNLOCATION.equalsIgnoreCase(name)){
 		onLastKnonwLocation(context, pm);
+	    }else if(KEY_RELOADSETTINGS.equalsIgnoreCase(name)) {
+		onReloadSettings(context, pm);
 	    } else {
 		onCustomMessage(context, pm);
 	    }
@@ -53,4 +56,5 @@ abstract class GCMAbstractMessageHandler extends GCMBaseReceiver {
     public abstract void onTakeScreenshot(Context context, PushMessage pm);
     public abstract void onCustomMessage(Context context, PushMessage pm);
     public abstract void onLastKnonwLocation(Context context, PushMessage pm);
+    public abstract void onReloadSettings(Context context, PushMessage pm);
 }
