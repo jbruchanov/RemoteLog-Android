@@ -10,7 +10,6 @@ abstract class GCMAbstractMessageHandler extends GCMBaseReceiver {
     public static final String KEY_ECHO = "Echo";
     public static final String KEY_NOTIFICATION = "Notification";
     public static final String KEY_QUESTION = "Question";
-    public static final String KEY_RESEND_REGISTRATION = "ResendRegistration";
     public static final String KEY_KILLAPP = "KillApp";
     public static final String KEY_TAKESCREENSHOT = "TakeScreenshot";
     public static final String KEY_LASTKNOWNLOCATION = "LastKnownLocation";
@@ -29,8 +28,6 @@ abstract class GCMAbstractMessageHandler extends GCMBaseReceiver {
 		onNotification(context, pm);
 	    } else if (KEY_QUESTION.equalsIgnoreCase(name)) {
 		onQuestion(context, pm);
-	    } else if (KEY_RESEND_REGISTRATION.equalsIgnoreCase(name)) {
-		onResendRegistration(context, pm);
 	    } else if (KEY_KILLAPP.equalsIgnoreCase(name)) {
 		onKillApp(context, pm);
 	    } else if (KEY_TAKESCREENSHOT.equalsIgnoreCase(name)) {
@@ -51,7 +48,6 @@ abstract class GCMAbstractMessageHandler extends GCMBaseReceiver {
     public abstract void onEcho(Context context, PushMessage pm);
     public abstract void onNotification(Context context, PushMessage pm);
     public abstract void onQuestion(Context context, PushMessage pm);
-    public abstract void onResendRegistration(Context context, PushMessage pm);
     public abstract void onKillApp(Context context, PushMessage pm);
     public abstract void onTakeScreenshot(Context context, PushMessage pm);
     public abstract void onCustomMessage(Context context, PushMessage pm);

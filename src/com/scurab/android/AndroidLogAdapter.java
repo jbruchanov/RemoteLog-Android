@@ -4,6 +4,12 @@ import android.util.Log;
 
 import com.scurab.android.rlw.ILog;
 
+/**
+ * Basic android LogAdapter for using together with RLog<br/>
+ * {@see RLog#setLog(ILog)}
+ * @author Joe Scurab
+ *
+ */
 public class AndroidLogAdapter implements ILog {
 
     @Override

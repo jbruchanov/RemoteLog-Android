@@ -1,5 +1,10 @@
 package com.scurab.android;
 
+/**
+ * Exception used only in case if KillApp message is received
+ * @author Joe Scurab
+ *
+ */
 public class KillAppException extends Error {
     /**
      * 

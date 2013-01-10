@@ -14,6 +14,7 @@ import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 
+import com.google.gson.Gson;
 import com.scurab.gwt.rlw.shared.model.Device;
 import com.scurab.gwt.rlw.shared.model.DeviceRespond;
 import com.scurab.gwt.rlw.shared.model.LogItem;
@@ -24,6 +25,7 @@ import com.scurab.gwt.rlw.shared.model.SettingsRespond;
 
 class ServiceConnector {
     private String mUrl;
+    private final Gson mGson;
     private static final String REGS_URL = "/regs";
     private static final String LOGS_URL = "/logs";
     private static final String SETTINGS_TEMPLATE_URL = "/settings/%s/%s";
@@ -37,6 +39,10 @@ class ServiceConnector {
     public ServiceConnector(String url) throws MalformedURLException {
 	if (url.endsWith("/")) {
 	    url = url.substring(0, url.length() - 1);
+	}
+	mGson = RemoteLog.getGson();
+	if(mGson == null){
+	    throw new IllegalStateException("RemoteLog.getGson() returns null!");
 	}
 	mUrl = url;
 	// just check if url is correct
@@ -52,11 +58,11 @@ class ServiceConnector {
      */
     public DeviceRespond saveDevice(Device... d) throws IOException {
 	String url = mUrl + REGS_URL;
-	String json = Core.GSON.toJson(d);
+	String json = mGson.toJson(d);
 	// write request
 	String respond = sendRequest(json, url, HTTP_POST);
 	// parse response
-	DeviceRespond dr = Core.GSON.fromJson(respond, DeviceRespond.class);
+	DeviceRespond dr = mGson.fromJson(respond, DeviceRespond.class);
 	return dr;
     }
 
@@ -69,11 +75,11 @@ class ServiceConnector {
      */
     public LogItemRespond saveLogItem(LogItem... d) throws IOException {
 	String url = mUrl + LOGS_URL;
-	String json = Core.GSON.toJson(d);
+	String json = mGson.toJson(d);
 	// write request
 	String respond = sendRequest(json, url, HTTP_POST);
 	// parse response
-	LogItemRespond dr = Core.GSON.fromJson(respond, LogItemRespond.class);
+	LogItemRespond dr = mGson.fromJson(respond, LogItemRespond.class);
 	return dr;
     }
 
@@ -87,13 +93,13 @@ class ServiceConnector {
      */
     public LogItemBlobRespond saveLogItemBlob(LogItemBlobRequest req,
 	    byte[] data) throws IOException {
-	String json = Core.GSON.toJson(req);
+	String json = mGson.toJson(req);
 	String url = String.format("%s%s?%s", mUrl, LOGS_URL,
 		URLEncoder.encode(json, "UTF-8"));
 	// write request
 	String respond = sendRequest(data, url, HTTP_PUT);
 	// parse response
-	LogItemBlobRespond dr = Core.GSON.fromJson(respond,
+	LogItemBlobRespond dr = mGson.fromJson(respond,
 		LogItemBlobRespond.class);
 	return dr;
     }
@@ -179,7 +185,7 @@ class ServiceConnector {
 		HTTP_GET);
 	// read response
 	String respond = read(hc.getInputStream());
-	SettingsRespond result = Core.GSON.fromJson(respond,
+	SettingsRespond result = mGson.fromJson(respond,
 		SettingsRespond.class);
 	hc.disconnect();
 	return result;

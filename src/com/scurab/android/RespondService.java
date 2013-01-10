@@ -1,11 +1,17 @@
 package com.scurab.android;
 
 import android.app.IntentService;
+import android.app.Notification;
 import android.content.Intent;
 
 import com.scurab.android.rlw.RLog;
 import com.scurab.gwt.rlw.shared.model.PushMessage;
 
+/**
+ * Simple service which is used for sending log items by {@link Notification}
+ * @author Joe Scurab
+ *
+ */
 public class RespondService extends IntentService {
     
     public RespondService() {

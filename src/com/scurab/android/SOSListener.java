@@ -1,9 +1,17 @@
 package com.scurab.android;
 
+import android.app.Activity;
 import android.view.KeyEvent;
 
 /**
  * Simple Volume SOS listener
+ * This class is helper for taking screenshot of app for users.
+ * <br/>
+ * In your activity override {@link Activity#onKeyDown(int, KeyEvent)} and send every event to
+ * {@link #dispatchKeyEvent(KeyEvent)} before passing to parent class. 
+ * 
+ * SOS - VolUp VolUp VolUp VolDown VolDown VolDown VolUp VolUp VolUp :)<br/>
+ * Screenshot will be taken and send to server
  * 
  * @author Joe Scurab
  * 

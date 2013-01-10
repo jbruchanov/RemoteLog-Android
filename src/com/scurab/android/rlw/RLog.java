@@ -40,6 +40,13 @@ public class RLog {
 
     private static ILog sLog = null;
 
+    /**
+     * Used for PushNotifiaction, this particular category of logging doesn't have specific mode value.
+     * Log item is not sent only if mode is {@value #TURN_OFF}
+     * @param source
+     * @param category
+     * @param msg
+     */
     public static void n(Object source, String category, String msg) {
 	if (sMode != TURN_OFF) {
 	    send(source, category, msg);
@@ -263,24 +270,36 @@ public class RLog {
 	    }
 	    li.setSource(n);
 	}
-	RemoteLog.getLogSender().addLogItem(li, libr);
+	LogSender ls = RemoteLog.getLogSender();
+	if(ls != null){
+	    ls.addLogItem(li, libr);
+	}
     }
 
     public static int getMode() {
 	return sMode;
     }
 
+    /**
+     * Enable one particular log mode, see {@see RLog} for mode constants
+     * @param sMode
+     */
     public static void addMode(int sMode) {
 	RLog.sMode |= sMode;
     }
 
+    /**
+     * Set exactly modes defined by input param
+     * @param sMode
+     */
     public static void setMode(int sMode) {
 	RLog.sMode = sMode;
     }
 
     /**
      * Set local log handler<br/>
-     * Methods will be called always, regardless on mode
+     * Methods will be called always, regardless on mode<br/>
+     * For mutliple log instances use Decorator pattenr :]
      * 
      * @param sLog
      */

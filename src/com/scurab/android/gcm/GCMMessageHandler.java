@@ -11,7 +11,6 @@ import android.location.Location;
 
 import com.scurab.android.KillAppException;
 import com.scurab.android.KnowsActiveActivity;
-import com.scurab.android.rlw.Core;
 import com.scurab.android.rlw.Locator;
 import com.scurab.android.rlw.Locator.OnLocationListener;
 import com.scurab.android.rlw.RLog;
@@ -58,14 +57,6 @@ public class GCMMessageHandler extends GCMAbstractMessageHandler {
     }
 
     @Override
-    public void onResendRegistration(Context context, PushMessage pm) {
-	RemoteLog rl = RemoteLog.getInstance();
-	if(rl != null){
-	    rl.registerDevice(context, true, false);
-	}
-    }
-
-    @Override
     public void onNotification(Context context, PushMessage pm) {
 	HashMap<String, Object> params = parseSimple(pm);
 	// parse
@@ -104,7 +95,7 @@ public class GCMMessageHandler extends GCMAbstractMessageHandler {
 
     @SuppressWarnings("unchecked")
     private HashMap<String, Object> parseSimple(PushMessage pm) {
-	return Core.GSON.fromJson(pm.getParams(), HashMap.class);
+	return RemoteLog.getGson().fromJson(pm.getParams(), HashMap.class);
     }
 
     @Override

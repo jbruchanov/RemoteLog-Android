@@ -92,7 +92,7 @@ class DeviceDataProvider {
 	}
 	result.putAll(getHardwareFeatures(c));
 	result.putAll(getRuntimeInfo(c));
-	String s = Core.GSON.toJson(result);
+	String s = RemoteLog.getGson().toJson(result);
 	return s;
     }
 
