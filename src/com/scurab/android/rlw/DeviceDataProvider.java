@@ -18,7 +18,7 @@ import com.scurab.gwt.rlw.shared.model.Device;
 /**
  * Help class for getting info about device
  * 
- * @author Joe Scurab
+ * @author Jiri Bruchanov
  * 
  */
 class DeviceDataProvider {

@@ -2,7 +2,6 @@ package com.scurab.android.gcm;
 
 import java.io.IOException;
 
-import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -26,7 +25,7 @@ import com.scurab.gwt.rlw.shared.model.PushMessage;
  * 
  */
 
-public class GCMBaseReceiver extends BroadcastReceiver {
+class GCMBaseReceiver extends BroadcastReceiver {
     private static final String TAG = "GCMReceiver";
     private static final String PREFERENCES = "com.google.android.gcm";
     private static final String PROPERTY_REG_ID = "regId";
@@ -115,6 +114,7 @@ public class GCMBaseReceiver extends BroadcastReceiver {
      */
     protected void onUnregistered(Context context, Intent intent)
 	    throws IOException {
+	@SuppressWarnings("unused")
 	String oldid = setRegistrationId(context, null);
 	Log.v(TAG + ".onUnregistered(..)",
 		"No ID saved, app is probably already unregistered!");
@@ -127,90 +127,6 @@ public class GCMBaseReceiver extends BroadcastReceiver {
     
     protected void onMessage(Context context, PushMessage pm) {}
 
-    /**
-     * Called when new message is received
-     * 
-     * @param context
-     * @param intent
-     */
-    protected void onMessageX(Context context, PushMessage pm) {
-	NotificationManager nm = (NotificationManager) context
-		.getSystemService(Context.NOTIFICATION_SERVICE);
-	
-	
-	
-	// PushMessage pm = getPushMessageFromIntent(intent);
-	// Notification n = null;
-	// try {
-	// IServer s = ((MainApp)
-	// context.getApplicationContext()).getServerConnection();
-	// Application app = s.getApplication(pm.getAppId());
-	// if (app != null) {
-	// Intent mIntent = new Intent(context, StartActivity.class);
-	// mIntent.setFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT |
-	// Intent.FLAG_ACTIVITY_CLEAR_TOP);
-	// mIntent.putExtra(C.APPLICATION, app);
-	// n = createNotification(context, pm, mIntent);
-	// } else {
-	// Log.v("GCMReceiver.onMessage(..)",
-	// String.format("AppName:%s AppId:%s return null from server, is it fake or not registered!?",
-	// pm.getAppName(), pm.getAppId()));
-	// n = createNotification(context, pm);
-	// }
-	// } catch (Exception e) {
-	// e.printStackTrace();
-	// n = createNotification(context, pm);
-	// }
-	// nm.notify(pm.getAppId(), n);
-    }
-
-    // /**
-    // * @see #createNotification(Context, PushMessage, Intent)
-    // * @param context
-    // * @param pm
-    // * @return
-    // */
-    // protected Notification createNotification(Context context, PushMessage
-    // pm) {
-    // return createNotification(context, pm, null);
-    // }
-    //
-    // /**
-    // * Creates notificatino to notification bar
-    // *
-    // * @param context
-    // * @param pm
-    // * @param notificationIntent
-    // * - set your own intent for notificatin, if it's null simple
-    // ActivityIntent to start
-    // * {@link MainListViewActivity} is used
-    // * @return
-    // */
-    // protected Notification createNotification(Context context, PushMessage
-    // pm, Intent notificationIntent) {
-    // Notification n = new Notification();
-    // n.icon = android.R.drawable.stat_notify_sync;
-    // n.when = System.currentTimeMillis();
-    // n.sound = RingtoneManager.getActualDefaultRingtoneUri(context,
-    // RingtoneManager.TYPE_NOTIFICATION);
-    // n.vibrate = new long[] { 100, 500, 100, 500, 100, 500 };
-    // n.flags |= Notification.FLAG_AUTO_CANCEL;
-    //
-    // Intent intent = null;
-    // if (notificationIntent != null) {
-    // intent = notificationIntent;
-    // } else {
-    // intent = new Intent(context, MainListViewActivity.class);
-    // intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-    // }
-    //
-    // n.setLatestEventInfo(context, pm.getAppName() + " update",
-    // context.getString(R.string.app_name),
-    // PendingIntent.getActivity(context, 0, intent,
-    // PendingIntent.FLAG_UPDATE_CURRENT));
-    // return n;
-    // }
-    
     static PushMessage parseMessage(Bundle b){
 	
 	String name = b.getString(COLLAPSE_KEY);
@@ -228,7 +144,7 @@ public class GCMBaseReceiver extends BroadcastReceiver {
 	pm.setName(name);
 	pm.setTimeStamp(timeStamp);
 	pm.setParams(params);
-	pm.setContext(context);
+	pm.setMessageContext(context);
 	
 	return pm;
     }

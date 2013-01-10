@@ -16,23 +16,66 @@ public class RLog {
 
     /**
      * Completely turn off remote logging<br/>
-     * You should always have at least {@value RLog#EXCEPTION} for getting
+     * You should always have at least {@value #EXCEPTION} for getting
      * uncought exceptions!
      */
     public static final int TURN_OFF = 0;
 
     /**
-     * Allow logging via {@link RLog#v(Object, String)} and
-     * {@link RLog#v(Object, String, String))}
+     * Allow logging via {@link RLog#i(Object, String)} and
+     * {@link RLog#i(Object, String, String)}
      */
     public static final int INFO = 1;
+    
+    /**
+     * Allow logging via {@link RLog#v(Object, String)} and
+     * {@link RLog#v(Object, String, String)}
+     */
     public static final int VERBOSE = 2;
+    
+    /**
+     * Allow logging via {@link RLog#d(Object, String)} and
+     * {@link RLog#d(Object, String, String)}
+     */
     public static final int DEBUG = 4;
+    
+    /**
+     * Allow logging via {@link RLog#w(Object, String)} and
+     * {@link RLog#w(Object, String, String)}
+     */
     public static final int WARNING = 8;
+    
+    /**
+     * Allow logging via {@link RLog#e(Object, String)} and
+     * {@link RLog#e(Object, String, String)} and {@link RLog#e(Object, String, Throwable)}
+     */
     public static final int ERROR = 16;
+    
+    /**
+     * Allow logging any uncought exception<br/>
+     * {@link RemoteLog#catchUncaughtErrors(Thread)}
+     * This value is default log mode
+     */
     public static final int EXCEPTION = 32;
+    
+    /**
+     * Allow logging via {@link RLog#wtf(Object, String)} and
+     * {@link RLog#wtf(Object, String, String)}
+     */
     public static final int WTF = 64;
+    
+    /**
+     * Allow logging via <br/>
+     * {@link RLog#takeScreenshot(Object, String, Activity)}<br/>
+     * {@link RLog#takeScreenshot(Object, String, KnowsActiveActivity)}<br/>
+     * {@link RLog#takeScreenshot(Object, String, View)}<br/>
+     * 
+     */
     public static final int SCREENSHOT = 128;
+    
+    /**
+     * Allow any log way
+     */
     public static final int ALL = INFO | VERBOSE | DEBUG | WARNING | ERROR
 	    | EXCEPTION | WTF | SCREENSHOT;
 
@@ -281,7 +324,7 @@ public class RLog {
     }
 
     /**
-     * Enable one particular log mode, see {@see RLog} for mode constants
+     * Enable one particular log mode, see {@link RLog} for mode constants
      * @param sMode
      */
     public static void addMode(int sMode) {

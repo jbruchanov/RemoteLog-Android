@@ -9,7 +9,7 @@ import com.scurab.gwt.rlw.shared.model.PushMessage;
 
 /**
  * Simple service which is used for sending log items by {@link Notification}
- * @author Joe Scurab
+ * @author Jiri Bruchanov
  *
  */
 public class RespondService extends IntentService {
@@ -28,6 +28,6 @@ public class RespondService extends IntentService {
     }
     
     private String getMessage(Intent i){
-	return String.format("Action:%s, Message:[%s]", i.getAction(), i.getExtras().get(PushMessage.class.getSimpleName()));
+	return String.format("Action:%s, Message:[%s]", i.getAction(), i.getExtras().getSerializable(PushMessage.class.getSimpleName()));
     }
 }

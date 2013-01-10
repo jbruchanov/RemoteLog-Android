@@ -199,6 +199,7 @@ class ServiceConnector {
 	hc.getOutputStream().write(pushToken.getBytes());
 	hc.getOutputStream().flush();
 	// read response
+	@SuppressWarnings("unused")
 	final String respond = read(hc.getInputStream());
 	hc.disconnect();
     }

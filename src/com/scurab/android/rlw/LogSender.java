@@ -11,7 +11,7 @@ import com.scurab.gwt.rlw.shared.model.LogItemRespond;
 
 /**
  * Implementation for communication
- * @author Joe Scurab
+ * @author Jiri Bruchanov
  *
  */
 class LogSender {

@@ -49,19 +49,9 @@ public class Locator {
 	if (listener == null) {
 	    throw new IllegalArgumentException("Null listener!");
 	}
-	Location result = null;
 	if (isGeolocationEnabled()) {
 	    Criteria c = new Criteria();
 	    final String provider = mLocationManager.getBestProvider(c, true);
-	    if (mLocationManager
-		    .isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-		result = mLocationManager
-			.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-	    } else if (mLocationManager
-		    .isProviderEnabled(LocationManager.PASSIVE_PROVIDER)) {
-		result = mLocationManager
-			.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
-	    }
 	    final LocationListener lh = new LocationListener() {
 		@Override
 		public void onStatusChanged(String provider, int status,

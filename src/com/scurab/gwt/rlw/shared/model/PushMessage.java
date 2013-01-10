@@ -52,11 +52,11 @@ public class PushMessage implements Serializable {
 	}
     }
 
-    public String getContext() {
+    public String getMessageContext() {
 	return mContext;
     }
 
-    public void setContext(String context) {
+    public void setMessageContext(String context) {
 	mContext = context;
     }
 }

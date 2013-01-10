@@ -9,11 +9,11 @@ import android.view.KeyEvent;
  * <br/>
  * In your activity override {@link Activity#onKeyDown(int, KeyEvent)} and send every event to
  * {@link #dispatchKeyEvent(KeyEvent)} before passing to parent class. 
- * 
+ * <br/>
  * SOS - VolUp VolUp VolUp VolDown VolDown VolDown VolUp VolUp VolUp :)<br/>
  * Screenshot will be taken and send to server
  * 
- * @author Joe Scurab
+ * @author Jiri Bruchanov
  * 
  */
 public class SOSListener {

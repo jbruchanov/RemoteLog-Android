@@ -9,7 +9,7 @@ import android.app.Activity;
  * Basically the best approach is to override {@link Activity#onStart()} and {@link Activity#onStop()}
  * methods and set current activity to Application object which implements this interface. 
  *
- * @author Joe Scurab
+ * @author Jiri Bruchanov
  *
  */
 public interface KnowsActiveActivity {

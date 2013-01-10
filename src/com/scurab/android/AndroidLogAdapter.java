@@ -3,11 +3,12 @@ package com.scurab.android;
 import android.util.Log;
 
 import com.scurab.android.rlw.ILog;
+import com.scurab.android.rlw.RLog;
 
 /**
  * Basic android LogAdapter for using together with RLog<br/>
- * {@see RLog#setLog(ILog)}
- * @author Joe Scurab
+ * {@link RLog#setLog(ILog)}
+ * @author Jiri Bruchanov
  *
  */
 public class AndroidLogAdapter implements ILog {

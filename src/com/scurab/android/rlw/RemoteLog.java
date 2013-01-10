@@ -31,15 +31,15 @@ import com.scurab.gwt.rlw.shared.model.SettingsRespond;
  * For every usage you have to call at least
  * {@link #init(Context, String, String, AsyncCallback)} to create first
  * registration on RemoteLog Server.<br/>
- * 
- * There are few optional pre-init methods to set some variables before
+ * <br/>
+ * There are few <b>optional pre-init methods</b> to set some variables before
  * initialization<br/>
- * {@see #registerForPushNotifications(String)} 
- * {@see #resendRegistration()}
- * {@see #setLogMode(int)}
- * {@see #setGson(Gson)}
+ * {@link #registerForPushNotifications(String)} <br/>
+ * {@link #resendRegistration()}<br/>
+ * {@link #setLogMode(int)}<br/>
+ * {@link #setGson(Gson)}<br/>
  * 
- * @author Joe Scurab
+ * @author Jiri Bruchanov
  * 
  */
 public final class RemoteLog {
@@ -125,8 +125,6 @@ public final class RemoteLog {
      * You can check GCM registration by
      * {@link GCMRegistrar#isRegisteredOnServer(Context)}
      * 
-     * @param enable
-     *            /disable push notifications this value is for
      * @param projectId
      */
     public static void registerForPushNotifications(String projectId) {
@@ -273,7 +271,6 @@ public final class RemoteLog {
      * Load settings from server<br/>
      * It's blocking => call it from nonMainThread
      * 
-     * @param appName
      * @param callback
      * @throws IllegalStateException
      */

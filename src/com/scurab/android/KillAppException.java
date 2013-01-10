@@ -2,7 +2,7 @@ package com.scurab.android;
 
 /**
  * Exception used only in case if KillApp message is received
- * @author Joe Scurab
+ * @author Jiri Bruchanov
  *
  */
 public class KillAppException extends Error {

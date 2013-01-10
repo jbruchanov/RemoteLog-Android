@@ -20,7 +20,7 @@ import com.scurab.gwt.rlw.shared.model.PushMessage;
 /**
  * Push message handler
  * 
- * @author Joe Scurab
+ * @author Jiri Bruchanov
  * 
  */
 public class GCMMessageHandler extends GCMAbstractMessageHandler {
@@ -75,7 +75,7 @@ public class GCMMessageHandler extends GCMAbstractMessageHandler {
 	// not necessary, every push is logged on income
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public void onQuestion(Context context, PushMessage pm) {
 	HashMap<String, Object> params = parseSimple(pm);

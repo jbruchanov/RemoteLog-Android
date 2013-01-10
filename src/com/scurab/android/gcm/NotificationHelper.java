@@ -88,6 +88,6 @@ class NotificationHelper {
 	Intent i = new Intent(c, RespondService.class);
 	i.setAction(action);
 	i.putExtra(PushMessage.class.getSimpleName(), pushMessage);
-	return PendingIntent.getService(c, 0, i, 0);
+	return PendingIntent.getService(c, (int)System.currentTimeMillis(), i, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 }
