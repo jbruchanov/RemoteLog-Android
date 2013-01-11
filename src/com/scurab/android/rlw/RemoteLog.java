@@ -431,7 +431,7 @@ public final class RemoteLog {
 	    public void uncaughtException(Thread thread, Throwable ex) {
 		if (sLogSender == null) {
 		    // not initialized => unable to send it
-		} else if ((RLog.getMode() ^ RLog.ERROR) == RLog.ERROR) {
+		} else if ((RLog.getMode() & RLog.ERROR) == RLog.ERROR) {
 		    Throwable[] ts = new Throwable[1];
 		    String stack = getStackTrace(ex, ts);
 
