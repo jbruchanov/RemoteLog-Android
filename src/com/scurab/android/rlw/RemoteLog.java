@@ -280,7 +280,7 @@ public final class RemoteLog {
 		    LogItemBlobRequest.MIME_TEXT_PLAIN,
 		    "fatalerror.txt", ueStack.getBytes());
 	    libr.setIsUncoughtError(true);
-	    RLog.send(this, "UncaughtException","History stack trace (might be diff version!)", libr);
+	    RLog.send(this, "UncaughtException","History stack trace", libr);
 	}
     }
 
@@ -460,7 +460,8 @@ public final class RemoteLog {
 		    if(!isKillApp){
 			libr.setIsUncoughtError(true);
 			String ce = sSelf.mPreferences.getString(UNCOUGHT_ERROR, "");
-			ce = ts[0].getMessage() + "\n" + stack + "\n\n" + ce;
+			String prefix = String.format("V:%s B:%s Date:%s", sSelf.mAppVersion, sSelf.mAppBuild, new Date().toGMTString());
+			ce = String.format("%s \n%s\n\n%s", prefix, ts[0].getMessage(), stack, ce);
 			sSelf.mPreferences.edit().putString(UNCOUGHT_ERROR, ce).commit();
 		    }
 		    
@@ -474,7 +475,7 @@ public final class RemoteLog {
 		oldOne.uncaughtException(thread, ex);
 	    }
 	});
-    }
+    }      
 
     public static String getStackTrace(Throwable ex) {
 	return getStackTrace(ex, null);
