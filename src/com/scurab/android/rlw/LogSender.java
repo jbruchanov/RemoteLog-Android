@@ -61,6 +61,11 @@ class LogSender {
 		    byte[] data = blob.getData();
 		    //save data
 		    mConnector.saveLogItemBlob(blob, data);
+		    
+		    if(blob.isUncoughtError()){
+			//delete uncought exception => we sucesfuly sent
+			RemoteLog.getInstance().clearUncoughtException();
+		    }
 		}
 	    } catch (InterruptedException e) {
 		e.printStackTrace();

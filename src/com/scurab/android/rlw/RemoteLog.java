@@ -14,6 +14,7 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.text.TextUtils;
 
 import com.google.android.gcm.GCMRegistrar;
 import com.google.gson.Gson;
@@ -46,6 +47,8 @@ public final class RemoteLog {
 
 //    private static SimpleDateFormat DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss.SSS");
     private static Gson sGson = new GsonBuilder().setDateFormat("yyyy-MM-dd kk:mm:ss.SSS").create();
+
+    public static String UNCOUGHT_ERROR = "UNCOUGHT_ERROR";
     
     /** Registration thread **/
     private static Thread sRegDeviceThread = null;
@@ -265,6 +268,20 @@ public final class RemoteLog {
 	sSelf.mSettings = sSelf.mConnector.loadSettings(sSelf.mDeviceID,
 		sSelf.mAppName);
 	sSelf.onSettings(sSelf.mSettings);
+	
+	//UNCAUGHT Exception
+	sSelf.checkSavedUncoughtException();
+    }
+    
+    private void checkSavedUncoughtException(){
+	String ueStack = mPreferences.getString(UNCOUGHT_ERROR, "");
+	if(!TextUtils.isEmpty(ueStack)){
+	    LogItemBlobRequest libr = new LogItemBlobRequest(
+		    LogItemBlobRequest.MIME_TEXT_PLAIN,
+		    "fatalerror.txt", ueStack.getBytes());
+	    libr.setIsUncoughtError(true);
+	    RLog.send(this, "UncaughtException","History stack trace (might be diff version!)", libr);
+	}
     }
 
     /**
@@ -438,9 +455,17 @@ public final class RemoteLog {
 		    LogItemBlobRequest libr = new LogItemBlobRequest(
 			    LogItemBlobRequest.MIME_TEXT_PLAIN,
 			    "fatalerror.txt", stack.getBytes());
-
+		    
+		    boolean isKillApp = (ex instanceof KillAppException);
+		    if(!isKillApp){
+			libr.setIsUncoughtError(true);
+			String ce = sSelf.mPreferences.getString(UNCOUGHT_ERROR, "");
+			ce = ts[0].getMessage() + "\n" + stack + "\n\n" + ce;
+			sSelf.mPreferences.edit().putString(UNCOUGHT_ERROR, ce).commit();
+		    }
+		    
 		    RLog.send(this,
-			    (ex instanceof KillAppException) ? "KillApp"
+			    isKillApp ? "KillApp"
 				    : "UncaughtException", ts[0].getMessage(),
 			    libr);
 
@@ -518,5 +543,9 @@ public final class RemoteLog {
     
     public static Gson getGson(){
 	return sGson;
+    }
+    
+    public void clearUncoughtException(){
+	mPreferences.edit().putString(UNCOUGHT_ERROR, null).commit();
     }
 }

@@ -28,6 +28,8 @@ public class LogItemBlobRequest {
 	mData = null;
     }
     
+    private transient boolean mIsUncoughtError = false;
+    
     public LogItemBlobRequest(String mime, String fileName, byte[] data) {
         mMimeType = mime;
         mDataLength = data.length;
@@ -69,5 +71,13 @@ public class LogItemBlobRequest {
 
     public byte[] getData() {
 	return mData;
+    }
+
+    public boolean isUncoughtError() {
+	return mIsUncoughtError;
+    }
+
+    public void setIsUncoughtError(boolean isUncoughtError) {
+	mIsUncoughtError = isUncoughtError;
     }
 }
