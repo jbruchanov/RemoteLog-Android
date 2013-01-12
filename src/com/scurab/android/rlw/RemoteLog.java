@@ -5,9 +5,13 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.net.MalformedURLException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Stack;
+
+import javax.net.ssl.TrustManager;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -39,6 +43,8 @@ import com.scurab.gwt.rlw.shared.model.SettingsRespond;
  * {@link #resendRegistration()}<br/>
  * {@link #setLogMode(int)}<br/>
  * {@link #setGson(Gson)}<br/>
+ * {@link #setCredentials(String, String)}<br/>
+ * {@link #setTrustManager(TrustManager)}<br/>
  * 
  * @author Jiri Bruchanov
  * 
@@ -133,6 +139,35 @@ public final class RemoteLog {
     public static void registerForPushNotifications(String projectId) {
 	sPushProjectId = projectId;
     }
+    
+    private static TrustManager mTrustManager = null;
+    /**
+     * Set any of yours trust manager to handle SSL certificates<br/>
+     * If you have self-signes certificate on your server, just use {@link FakeTrustManager} for it
+     * 
+     * @param manager
+     */
+    public static void setTrustManager(TrustManager manager){
+	mTrustManager = manager;
+    }
+    
+    private static String mUsername;
+    private static String mPassword;
+    
+    /**
+     * Set website credentials 
+     * @param username
+     * @param password
+     * @throws IllegalArgumentException if username or password is null
+     */
+    public static void setCredentials(String username, String password){
+	if(username == null || password == null){
+	    throw new IllegalArgumentException("Null username or password");
+	}
+	
+	mUsername = username;
+	mPassword = password;
+    }
 
     /**
      * Register RemoteLog for usage
@@ -146,10 +181,12 @@ public final class RemoteLog {
      *            - optional listener called when registration finished
      * @throws NameNotFoundException
      * @throws MalformedURLException
+     * @throws NoSuchAlgorithmException 
+     * @throws KeyManagementException 
      */
     public static void init(final Context c, String appName,
 	    String serverLocation, final AsyncCallback<RemoteLog> finishListener)
-	    throws NameNotFoundException, MalformedURLException {
+	    throws NameNotFoundException, MalformedURLException, KeyManagementException, NoSuchAlgorithmException {
 
 	if (c == null) {
 	    throw new IllegalArgumentException("Context is null!");
@@ -173,7 +210,7 @@ public final class RemoteLog {
 	sSelf.mAppName = appName;
 
 	// create server connector
-	sSelf.mConnector = new ServiceConnector(serverLocation);
+	sSelf.mConnector = new ServiceConnector(serverLocation, mTrustManager, mUsername, mPassword);
 
 	// init preferences
 	sSelf.mPreferences = c.getSharedPreferences(
@@ -237,6 +274,7 @@ public final class RemoteLog {
 	if (sSelf.mDeviceID == 0) {
 	    // only if request to server was sucesfull, but respond doesn't have
 	    // an ID
+	    sSelf.mConnector = null;
 	    throw new IllegalStateException("Unable to register device");
 	}
 
@@ -407,13 +445,12 @@ public final class RemoteLog {
     /**
      * Create new logItem prefilled by deviceId, appBuild, appName, appVersion
      * 
-     * @return
-     * @throws IllegalStateException
-     *             if RemoteLog is not initialized
+     * @return null if RemoteLog is not properly initialized
+     * 
      */
-    public static LogItem createLogItem() throws IllegalStateException {
+    public static LogItem createLogItem(){
 	if (sLogSender == null) {
-	    throw new IllegalStateException("Not initialized!");
+	    return null;
 	}
 	LogItem li = new LogItem();
 	li.setDeviceID(sSelf.mDeviceID);
@@ -548,5 +585,9 @@ public final class RemoteLog {
     
     public void clearUncoughtException(){
 	mPreferences.edit().putString(UNCOUGHT_ERROR, null).commit();
+    }
+    
+    public static boolean isInitialized(){
+	return sSelf.sLogSender != null;
     }
 }

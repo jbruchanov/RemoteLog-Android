@@ -9,10 +9,21 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
 
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
+
+import android.util.Base64;
 
 import com.google.gson.Gson;
 import com.scurab.gwt.rlw.shared.model.Device;
@@ -24,8 +35,7 @@ import com.scurab.gwt.rlw.shared.model.LogItemRespond;
 import com.scurab.gwt.rlw.shared.model.SettingsRespond;
 
 class ServiceConnector {
-    private String mUrl;
-    private final Gson mGson;
+
     private static final String REGS_URL = "/regs";
     private static final String LOGS_URL = "/logs";
     private static final String SETTINGS_TEMPLATE_URL = "/settings/%s/%s";
@@ -36,17 +46,51 @@ class ServiceConnector {
 
     private static final int TIMEOUT = 2000;
 
-    public ServiceConnector(String url) throws MalformedURLException {
+    private String mUrl;
+    private final Gson mGson;
+    private final SSLSocketFactory mSSLFactory;
+    
+    private final String mLoginBase64;    
+
+    private final HostnameVerifier mHostnameVerifier = new HostnameVerifier() {
+	@Override
+	public boolean verify(String hostname, SSLSession session) {
+	    return true;
+	}
+    };
+
+    public ServiceConnector(String url, TrustManager manager, String username, String password)
+	    throws MalformedURLException, KeyManagementException,
+	    NoSuchAlgorithmException {
 	if (url.endsWith("/")) {
 	    url = url.substring(0, url.length() - 1);
 	}
 	mGson = RemoteLog.getGson();
-	if(mGson == null){
+	if (mGson == null) {
 	    throw new IllegalStateException("RemoteLog.getGson() returns null!");
 	}
 	mUrl = url;
+
 	// just check if url is correct
 	new URL(url);
+
+	mSSLFactory = manager != null ? initSSLSocketFactory(manager) : null;
+
+	if(username != null && password != null){
+	    mLoginBase64 = Base64.encodeToString(String.format("%s:%s", username, password).getBytes(), Base64.DEFAULT);
+	}else{
+	    mLoginBase64 = null;
+	}
+    }
+
+    private SSLSocketFactory initSSLSocketFactory(TrustManager manager)
+	    throws KeyManagementException, NoSuchAlgorithmException {
+	// Install the all-trusting trust manager
+	final SSLContext sslContext = SSLContext.getInstance("SSL");
+	sslContext.init(null, new TrustManager[] { manager },
+		new java.security.SecureRandom());
+	// Create an ssl socket factory with our all-trusting manager
+	return sslContext.getSocketFactory();
     }
 
     /**
@@ -150,6 +194,15 @@ class ServiceConnector {
 	URL u = new URL(url);
 	URLConnection connection = u.openConnection();
 	HttpURLConnection hc = (HttpURLConnection) connection;
+	if(mSSLFactory != null && hc instanceof HttpsURLConnection){
+	    HttpsURLConnection huc = (HttpsURLConnection)hc;
+	    huc.setHostnameVerifier(mHostnameVerifier);
+	    huc.setSSLSocketFactory(mSSLFactory);
+	}
+	
+	if(mLoginBase64 != null){
+	    hc.setRequestProperty("Authorization", "Basic " + mLoginBase64);
+	}
 
 	// set timeout
 	HttpParams httpParameters = new BasicHttpParams();
@@ -185,16 +238,15 @@ class ServiceConnector {
 		HTTP_GET);
 	// read response
 	String respond = read(hc.getInputStream());
-	SettingsRespond result = mGson.fromJson(respond,
-		SettingsRespond.class);
+	SettingsRespond result = mGson.fromJson(respond, SettingsRespond.class);
 	hc.disconnect();
 	return result;
     }
 
     public void updatePushToken(int deviceId, String pushToken)
 	    throws IOException {
-	HttpURLConnection hc = openConnection(
-		mUrl + REGS_URL + "/" + deviceId, HTTP_PUT);
+	HttpURLConnection hc = openConnection(mUrl + REGS_URL + "/" + deviceId,
+		HTTP_PUT);
 	// write request
 	hc.getOutputStream().write(pushToken.getBytes());
 	hc.getOutputStream().flush();
