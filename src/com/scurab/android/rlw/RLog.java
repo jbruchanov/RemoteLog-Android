@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.text.TextUtils;
 import android.view.View;
 
 import com.scurab.android.KnowsActiveActivity;
@@ -12,12 +13,14 @@ import com.scurab.gwt.rlw.shared.model.LogItemBlobRequest;
 
 public class RLog {
 
+    private static final String ERROR2 = "Error";
+
     private static final String SEPARATOR = "|";
 
     /**
      * Completely turn off remote logging<br/>
-     * You should always have at least {@value #EXCEPTION} for getting
-     * uncought exceptions!
+     * You should always have at least {@value #EXCEPTION} for getting uncought
+     * exceptions!
      */
     public static final int TURN_OFF = 0;
 
@@ -26,44 +29,45 @@ public class RLog {
      * {@link RLog#i(Object, String, String)}
      */
     public static final int INFO = 1;
-    
+
     /**
      * Allow logging via {@link RLog#v(Object, String)} and
      * {@link RLog#v(Object, String, String)}
      */
     public static final int VERBOSE = 2;
-    
+
     /**
      * Allow logging via {@link RLog#d(Object, String)} and
      * {@link RLog#d(Object, String, String)}
      */
     public static final int DEBUG = 4;
-    
+
     /**
      * Allow logging via {@link RLog#w(Object, String)} and
      * {@link RLog#w(Object, String, String)}
      */
     public static final int WARNING = 8;
-    
+
     /**
      * Allow logging via {@link RLog#e(Object, String)} and
-     * {@link RLog#e(Object, String, String)} and {@link RLog#e(Object, String, Throwable)}
+     * {@link RLog#e(Object, String, String)} and
+     * {@link RLog#e(Object, String, Throwable)}
      */
     public static final int ERROR = 16;
-    
+
     /**
      * Allow logging any uncought exception<br/>
-     * {@link RemoteLog#catchUncaughtErrors(Thread)}
-     * This value is default log mode
+     * {@link RemoteLog#catchUncaughtErrors(Thread)} This value is default log
+     * mode
      */
     public static final int EXCEPTION = 32;
-    
+
     /**
      * Allow logging via {@link RLog#wtf(Object, String)} and
      * {@link RLog#wtf(Object, String, String)}
      */
     public static final int WTF = 64;
-    
+
     /**
      * Allow logging via <br/>
      * {@link RLog#takeScreenshot(Object, String, Activity)}<br/>
@@ -72,7 +76,7 @@ public class RLog {
      * 
      */
     public static final int SCREENSHOT = 128;
-    
+
     /**
      * Allow any log way
      */
@@ -84,8 +88,10 @@ public class RLog {
     private static ILog sLog = null;
 
     /**
-     * Used for PushNotifiaction, this particular category of logging doesn't have specific mode value.
-     * Log item is not sent only if mode is {@value #TURN_OFF}
+     * Used for PushNotifiaction, this particular category of logging doesn't
+     * have specific mode value. Log item is not sent only if mode is
+     * {@value #TURN_OFF}
+     * 
      * @param source
      * @param category
      * @param msg
@@ -101,7 +107,7 @@ public class RLog {
 
     public static void i(Object source, String msg) {
 	i(source, "Info", msg);
-	
+
     }
 
     public static void i(Object source, String category, String msg) {
@@ -140,7 +146,7 @@ public class RLog {
     }
 
     public static void e(Object source, String msg) {
-	e(source, "Error", msg);
+	e(source, ERROR2, msg);
     }
 
     public static void e(Object source, String category, String msg) {
@@ -154,13 +160,16 @@ public class RLog {
 
     public static void e(Object source, Throwable t) {
 	if ((sMode & ERROR) == ERROR) {
-	    e(source, "Error", t);
+	    e(source, ERROR2, t);
 	}
     }
+    public static void e(Object source, String message, Throwable t) {
+	e(source, ERROR2, message, t);
+    }
 
-    public static void e(Object source, String category, Throwable t) {
+    public static void e(Object source, String category, String message, Throwable t) {
 	if ((sMode & ERROR) == ERROR) {
-	    send(source, category, getMessageOrClassName(t),
+	    send(source, category, TextUtils.isEmpty(message) ? getMessageOrClassName(t) : message,
 		    new LogItemBlobRequest("text/plain", "error.txt", RemoteLog
 			    .getStackTrace(t).getBytes()));
 	}
@@ -314,6 +323,9 @@ public class RLog {
 	    return;
 	}
 	LogItem li = RemoteLog.createLogItem();
+	if (li == null) {// not yet initialized
+	    return;
+	}
 	li.setCategory(category);
 	li.setMessage(msg);
 	if (source != null) {
@@ -324,7 +336,7 @@ public class RLog {
 	    li.setSource(n);
 	}
 	LogSender ls = RemoteLog.getLogSender();
-	if(ls != null){
+	if (ls != null) {
 	    ls.addLogItem(li, libr);
 	}
     }
@@ -335,6 +347,7 @@ public class RLog {
 
     /**
      * Enable one particular log mode, see {@link RLog} for mode constants
+     * 
      * @param sMode
      */
     public static void addMode(int sMode) {
@@ -343,6 +356,7 @@ public class RLog {
 
     /**
      * Set exactly modes defined by input param
+     * 
      * @param sMode
      */
     public static void setMode(int sMode) {
@@ -369,19 +383,29 @@ public class RLog {
 	int result = 0;
 	boolean found = false;
 	values = values.trim();
-	if (values != null && values.length() > 0) {
+	if (TextUtils.isEmpty(values)) {
+	    try {
+		int v = Integer.parseInt(values);
+		found = (v <= ALL && v >= TURN_OFF);
+		if (found) {
+		    result = v;
+		    return result;
+		}
+	    } catch (Exception e) {
+		// ignore parseInt exception
+	    }
 	    int subvalue = 0;
-	    //array
+	    // array
 	    if (values.contains(SEPARATOR)) {
-		String[] vs = values.split("\\"+SEPARATOR);
+		String[] vs = values.split("\\" + SEPARATOR);
 		for (String v : vs) {
-		    subvalue = getModeValue(v);		    
+		    subvalue = getModeValue(v);
 		    if (subvalue != -1) {
 			found = true;
 			result |= subvalue;
 		    }
 		}
-	    } else {//single value
+	    } else {// single value
 		subvalue = getModeValue(values);
 		if (subvalue != -1) {
 		    found = true;

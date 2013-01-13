@@ -41,6 +41,7 @@ import com.scurab.gwt.rlw.shared.model.SettingsRespond;
  * initialization<br/>
  * {@link #registerForPushNotifications(String)} <br/>
  * {@link #resendRegistration()}<br/>
+ * {@link #setDeviceDataProvider(DeviceDataProvider)}<br/>
  * {@link #setLogMode(int)}<br/>
  * {@link #setGson(Gson)}<br/>
  * {@link #setCredentials(String, String)}<br/>
@@ -167,6 +168,12 @@ public final class RemoteLog {
 	
 	mUsername = username;
 	mPassword = password;
+    }
+    
+    private static DeviceDataProvider mDeviceDataProvider;
+    
+    public static void setDeviceDataProvider(DeviceDataProvider provider){
+	mDeviceDataProvider = provider;
     }
 
     /**
@@ -386,7 +393,10 @@ public final class RemoteLog {
 	int resultId = 0;
 	try {
 	    // get device
-	    Device d = DeviceDataProvider.getDevice(c);
+	    if(mDeviceDataProvider == null){
+		mDeviceDataProvider = new DeviceDataProvider();
+	    }
+	    Device d = mDeviceDataProvider.getDevice(c);
 	    // save it
 	    DeviceRespond dr = mConnector.saveDevice(d);
 	    if (dr == null || dr.hasError()) {

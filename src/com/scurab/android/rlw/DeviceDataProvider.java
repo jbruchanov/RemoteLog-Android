@@ -4,12 +4,14 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.regex.Pattern;
 
+import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.telephony.TelephonyManager;
 import android.util.DisplayMetrics;
 
 import com.google.android.gcm.GCMRegistrar;
@@ -21,7 +23,7 @@ import com.scurab.gwt.rlw.shared.model.Device;
  * @author Jiri Bruchanov
  * 
  */
-class DeviceDataProvider {
+public class DeviceDataProvider {
 
     private static final String PLATFORM = "Android";
     public static final Pattern EMAIL_ADDRESS = Pattern
@@ -35,7 +37,7 @@ class DeviceDataProvider {
      * @param c
      * @return
      */
-    public static Device getDevice(Context c) {
+    public Device getDevice(Context c) {
 	Device d = new Device();
 	d.setBrand(Build.MANUFACTURER);
 	// d.setDescription();
@@ -56,7 +58,7 @@ class DeviceDataProvider {
      * @param c
      * @return
      */
-    public static String getPushId(Context c) {
+    protected static String getPushId(Context c) {
 	if (GCMRegistrar.isRegisteredOnServer(c)) {
 	    return GCMRegistrar.getRegistrationId(c);
 	} else {
@@ -70,7 +72,7 @@ class DeviceDataProvider {
      * @param c
      * @return
      */
-    public static String getResolution(Context c) {
+    protected String getResolution(Context c) {
 	DisplayMetrics dm = c.getResources().getDisplayMetrics();
 	return String.format("%sx%s", dm.widthPixels, dm.heightPixels);
     }
@@ -80,7 +82,7 @@ class DeviceDataProvider {
      * 
      * @return
      */
-    public static String getDetails(Context c) {
+    protected String getDetails(Context c) {
 	HashMap<String, Object> result = new HashMap<String, Object>();
 	Field[] fields = Build.class.getDeclaredFields();
 	for (Field f : fields) {
@@ -92,6 +94,7 @@ class DeviceDataProvider {
 	}
 	result.putAll(getHardwareFeatures(c));
 	result.putAll(getRuntimeInfo(c));
+	result.putAll(getTelephonyInfo(c));
 	String s = RemoteLog.getGson().toJson(result);
 	return s;
     }
@@ -102,7 +105,7 @@ class DeviceDataProvider {
      * @param c
      * @return
      */
-    public static HashMap<String, Object> getHardwareFeatures(Context c) {
+    protected HashMap<String, Object> getHardwareFeatures(Context c) {
 	HashMap<String, Object> result = new HashMap<String, Object>();
 	PackageManager pm = c.getPackageManager();
 	Field[] fields = PackageManager.class.getDeclaredFields();
@@ -129,7 +132,7 @@ class DeviceDataProvider {
      * @param c
      * @return
      */
-    public static HashMap<String, Object> getRuntimeInfo(Context c) {
+    protected HashMap<String, Object> getRuntimeInfo(Context c) {
 	HashMap<String, Object> result = new HashMap<String, Object>();
 	Runtime r = Runtime.getRuntime();
 	result.put("MEMORY_MAX", r.maxMemory());
@@ -139,7 +142,7 @@ class DeviceDataProvider {
 	return result;
     }
 
-    private static int getShouldMemory(Context c) {
+    protected int getShouldMemory(Context c) {
 	ActivityManager am = (ActivityManager) c
 		.getSystemService(Context.ACTIVITY_SERVICE);
 	int memoryClass = am.getMemoryClass();
@@ -154,19 +157,43 @@ class DeviceDataProvider {
      * @param c
      * @return primary mail if possible, otherwise null
      */
-    public static String getOwner(Context c) {
+    protected String getOwner(Context c) {
 	String result = null;
 	try {
-	    Pattern emailPattern = EMAIL_ADDRESS; // API level 8+
-	    Account[] accounts = AccountManager.get(c).getAccounts();
-	    for (Account account : accounts) {
-		if (emailPattern.matcher(account.name).matches()) {
-		    String possibleEmail = account.name;
-		    result = possibleEmail;
-		    break;
+	    if (c.checkCallingOrSelfPermission(Manifest.permission.GET_ACCOUNTS) == PackageManager.PERMISSION_GRANTED) {
+		Pattern emailPattern = EMAIL_ADDRESS; // API level 8+
+		Account[] accounts = AccountManager.get(c).getAccounts();
+		for (Account account : accounts) {
+		    if (emailPattern.matcher(account.name).matches()) {
+			String possibleEmail = account.name;
+			result = possibleEmail;
+			break;
+		    }
 		}
 	    }
 	} catch (Throwable e) {
+	    e.printStackTrace();
+	}
+	return result;
+    }
+
+    protected HashMap<String, Object> getTelephonyInfo(Context c) {
+
+	HashMap<String, Object> result = new HashMap<String, Object>();
+	try {
+	    if (c.checkCallingOrSelfPermission(Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
+		TelephonyManager tm = (TelephonyManager) c
+			.getSystemService(Context.TELEPHONY_SERVICE);
+		result.put("TEL_IMEI/MEID", tm.getDeviceId());
+		result.put("TEL_IMEI/SV", tm.getDeviceSoftwareVersion());
+		result.put("TEL_LINE1NUMBER", tm.getLine1Number());
+		result.put("TEL_COUNTRY", tm.getNetworkCountryIso());
+		result.put("SIM_OPERATOR", tm.getSimOperator());
+		result.put("SIM_OPERATOR_NAME", tm.getSimOperatorName());
+		result.put("SIM_SERNUM", tm.getSimSerialNumber());
+		result.put("SIM_IMSI", tm.getSubscriberId());
+	    }
+	} catch (Exception e) {
 	    e.printStackTrace();
 	}
 	return result;
