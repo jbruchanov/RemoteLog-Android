@@ -10,6 +10,8 @@ import android.accounts.AccountManager;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.telephony.TelephonyManager;
 import android.util.DisplayMetrics;
@@ -77,6 +79,21 @@ public class DeviceDataProvider {
 	return String.format("%sx%s", dm.widthPixels, dm.heightPixels);
     }
 
+    protected String getWifiMACAddress(Context c) {
+	String result = null;
+	try {
+	    if (c.checkCallingOrSelfPermission(Manifest.permission.ACCESS_WIFI_STATE) == PackageManager.PERMISSION_GRANTED) {
+		WifiManager wifiMan = (WifiManager) c
+			.getSystemService(Context.WIFI_SERVICE);
+		WifiInfo wifiInfo = wifiMan.getConnectionInfo();
+		result = wifiInfo != null ? wifiInfo.getMacAddress() : null;
+	    }
+	} catch (Exception e) {
+	    e.printStackTrace();
+	}
+	return result;
+    }
+
     /**
      * JSON serialized {@link Build}
      * 
@@ -95,6 +112,7 @@ public class DeviceDataProvider {
 	result.putAll(getHardwareFeatures(c));
 	result.putAll(getRuntimeInfo(c));
 	result.putAll(getTelephonyInfo(c));
+	result.put("WIFI_MAC", getWifiMACAddress(c));
 	String s = RemoteLog.getGson().toJson(result);
 	return s;
     }
