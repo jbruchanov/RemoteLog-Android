@@ -53,7 +53,7 @@ import com.scurab.gwt.rlw.shared.model.SettingsRespond;
 public final class RemoteLog {
 
 //    private static SimpleDateFormat DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss.SSS");
-    private static Gson sGson = new GsonBuilder().setDateFormat("yyyy-MM-dd kk:mm:ss.SSS").create();
+    private static Gson sGson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss.SSS").create();
 
     public static String UNCOUGHT_ERROR = "UNCOUGHT_ERROR";
     
