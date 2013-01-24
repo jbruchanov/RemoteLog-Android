@@ -383,7 +383,7 @@ public class RLog {
 	int result = 0;
 	boolean found = false;
 	values = values.trim();
-	if (TextUtils.isEmpty(values)) {
+	if (!TextUtils.isEmpty(values)) {
 	    try {
 		int v = Integer.parseInt(values);
 		found = (v <= ALL && v >= TURN_OFF);
