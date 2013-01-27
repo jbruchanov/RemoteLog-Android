@@ -1,6 +1,7 @@
 package com.scurab.android.rlw;
 
 import java.io.IOException;
+import java.lang.Thread.State;
 import java.util.HashMap;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -30,6 +31,8 @@ class LogSender {
     
     private ServiceConnector mConnector;
     
+    private LogItem mWorkingLogItem = null;
+    
     public LogSender(ServiceConnector connector){
 	mConnector = connector;
 	createWorkingThread();
@@ -49,12 +52,11 @@ class LogSender {
     private void workingThreadImpl(){
 	while(mIsRunning){
 	    checkPause();
-	    LogItem li = null;
-	    try {
-		li = mItems.take();
-		LogItemRespond lir = mConnector.saveLogItem(li);
+	    try {		
+		mWorkingLogItem = mItems.take();
+		LogItemRespond lir = mConnector.saveLogItem(mWorkingLogItem);
 		//check if there is a blob for write
-		LogItemBlobRequest blob = mCoData.get(li);
+		LogItemBlobRequest blob = mCoData.get(mWorkingLogItem);
 		if(blob != null){
 		    //set logid for blob item
 		    blob.setLogItemID(lir.getContext().getID());
@@ -73,7 +75,7 @@ class LogSender {
 		e.printStackTrace();
 	    }
 	    //dont forget to remove co-data
-	    mCoData.remove(li);
+	    mCoData.remove(mWorkingLogItem);
 	}
     }
     
@@ -150,10 +152,12 @@ class LogSender {
     }
     
     /**
-     * Block current thread till everything is send
+     * Block current thread till everything is send<br/>
+     * It's active waiting
+     * 
      */
     public void waitForEmptyQueue(){
-	while(mItems.size() > 0 || mCoData.size() > 0){
+	while(mItems.size() > 0 || mCoData.size() > 0 || mWorkingThread.getState() == State.RUNNABLE){
 	    try {
 		Thread.sleep(50);
 	    } catch (InterruptedException e) {

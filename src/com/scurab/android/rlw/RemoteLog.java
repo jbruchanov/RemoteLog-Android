@@ -13,6 +13,7 @@ import java.util.Stack;
 
 import javax.net.ssl.TrustManager;
 
+import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -56,6 +57,7 @@ public final class RemoteLog {
     private static Gson sGson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss.SSS").create();
 
     public static String UNCOUGHT_ERROR = "UNCOUGHT_ERROR";
+    public static String PUSH_TOKEN = "PUSH_TOKEN";
     
     /** Registration thread **/
     private static Thread sRegDeviceThread = null;
@@ -70,6 +72,10 @@ public final class RemoteLog {
     private ServiceConnector mConnector;
     private SharedPreferences mPreferences;
     private SettingsRespond mSettings;
+    private Application mApplication;
+
+    private String mServerLocation;
+    
     private static LogSender sLogSender;
 
     /* Settings constants */
@@ -175,7 +181,7 @@ public final class RemoteLog {
     public static void setDeviceDataProvider(DeviceDataProvider provider){
 	mDeviceDataProvider = provider;
     }
-
+    
     /**
      * Register RemoteLog for usage
      * 
@@ -191,7 +197,7 @@ public final class RemoteLog {
      * @throws NoSuchAlgorithmException 
      * @throws KeyManagementException 
      */
-    public static void init(final Context c, String appName,
+    public static void init(final Application c, String appName,
 	    String serverLocation, final AsyncCallback<RemoteLog> finishListener)
 	    throws NameNotFoundException, MalformedURLException, KeyManagementException, NoSuchAlgorithmException {
 
@@ -213,11 +219,15 @@ public final class RemoteLog {
 	// set log mode
 	RLog.setMode(sLogMode);
 
+	
+	sSelf.mApplication = c;
+	
 	// set appname
 	sSelf.mAppName = appName;
 
+	sSelf.mServerLocation = serverLocation;
 	// create server connector
-	sSelf.mConnector = new ServiceConnector(serverLocation, mTrustManager, mUsername, mPassword);
+	sSelf.mConnector = new ServiceConnector(sSelf.mServerLocation, mTrustManager, mUsername, mPassword);
 
 	// init preferences
 	sSelf.mPreferences = c.getSharedPreferences(
@@ -244,6 +254,8 @@ public final class RemoteLog {
 	    public void run() {
 		try {
 		    registerImpl(c, finishListener);
+		    //remove it if it's unnecessary for future
+		    sSelf.mApplication = null;
 		} catch (Exception e) {
 		    if (sSelf.mDeviceID != 0) {
 			RLog.e(sSelf, e);
@@ -272,13 +284,16 @@ public final class RemoteLog {
     private static void registerImpl(Context c,
 	    AsyncCallback<RemoteLog> finishListener) throws IOException {
 
+	final int devId = sSelf.mDeviceID;
+	
 	// REGISTRATION TO RLW SERVER
 	// (re)send registration to RemoteLogWeb server
 	if (sSelf.mDeviceID == 0 || sResend) {
 	    sSelf.mDeviceID = sSelf.sendDeviceToServer(c);
 	}
 
-	if (sSelf.mDeviceID == 0) {
+	//fails only if we didn't receive any ID ever => no fail when resend failed
+	if (sSelf.mDeviceID == 0 && devId == 0) {
 	    // only if request to server was sucesfull, but respond doesn't have
 	    // an ID
 	    sSelf.mConnector = null;
@@ -300,9 +315,14 @@ public final class RemoteLog {
 						    // google GCM
 						    // service
 	    } else {
+		String token = GCMRegistrar.getRegistrationId(c);
+		String savedToken = sSelf.mPreferences.getString(PUSH_TOKEN, "");
+		//sending everytime, possible improvement to send only when is changed				
 		// if we are registered, we need to send it to our
 		// server as well
-		sSelf.updatePushToken(GCMRegistrar.getRegistrationId(c));
+		if(!savedToken.equals(token)){
+		    sSelf.updatePushToken(GCMRegistrar.getRegistrationId(c));
+		}
 	    }
 	} else {
 	    // maybe someone registered push notifiaction before
@@ -476,10 +496,21 @@ public final class RemoteLog {
     }
 
     /**
-     * 
+     * @param if true, registration is checked and if it's not valid it will try again, re-registration is async => even if it's restarted return will be null
      * @return object if device is registered, otherwise null
      */
-    protected static LogSender getLogSender() {
+    protected static LogSender getLogSender(boolean checkReg) {
+	if(checkReg && sLogSender == null && sRegDeviceThread == null) {
+	    //- we gonna to try re-registration before it failed before
+	    //- here is potential problem with sSelf.mApplication, it should be null only if reg was sucesfull => this
+	    //  should never happened
+	    //- this is case for no sucessful registration at all
+	    try{
+		init(sSelf.mApplication, sSelf.mAppName, sSelf.mServerLocation, null);
+	    }catch(Exception e){
+		e.printStackTrace();
+	    }
+	}
 	return sLogSender;
     }
 

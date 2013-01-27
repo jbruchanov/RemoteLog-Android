@@ -335,7 +335,7 @@ public class RLog {
 	    }
 	    li.setSource(n);
 	}
-	LogSender ls = RemoteLog.getLogSender();
+	LogSender ls = RemoteLog.getLogSender(true);
 	if (ls != null) {
 	    ls.addLogItem(li, libr);
 	}
