@@ -204,11 +204,11 @@ public final class RemoteLog {
 	if (c == null) {
 	    throw new IllegalArgumentException("Context is null!");
 	}
-	if (appName == null) {
-	    throw new IllegalArgumentException("appName is null");
+	if (TextUtils.isEmpty(appName)) {
+	    throw new IllegalArgumentException("appName must be set");
 	}
-	if (serverLocation == null) {
-	    throw new IllegalArgumentException("serverLocation is null");
+	if (TextUtils.isEmpty(serverLocation)) {
+	    throw new IllegalArgumentException("serverLocation must be set");
 	}
 
 	if (sRegDeviceThread != null) {
@@ -285,11 +285,14 @@ public final class RemoteLog {
 	    AsyncCallback<RemoteLog> finishListener) throws IOException {
 
 	final int devId = sSelf.mDeviceID;
-	
+	Device device = null;
 	// REGISTRATION TO RLW SERVER
 	// (re)send registration to RemoteLogWeb server
 	if (sSelf.mDeviceID == 0 || sResend) {
-	    sSelf.mDeviceID = sSelf.sendDeviceToServer(c);
+	    device = sSelf.sendDeviceToServer(c);
+	    if(device != null){
+		sSelf.mDeviceID = device.getDeviceID();
+	    }
 	}
 
 	//fails only if we didn't receive any ID ever => no fail when resend failed
@@ -320,7 +323,7 @@ public final class RemoteLog {
 		//sending everytime, possible improvement to send only when is changed				
 		// if we are registered, we need to send it to our
 		// server as well
-		if(!savedToken.equals(token)){
+		if(!savedToken.equals(token) || (device != null && !token.equals(device.getPushID()))){
 		    sSelf.updatePushToken(GCMRegistrar.getRegistrationId(c));
 		}
 	    }
@@ -409,33 +412,38 @@ public final class RemoteLog {
      * @param c
      * @throws IOException
      */
-    private int sendDeviceToServer(Context c){
-	int resultId = 0;
+    private Device sendDeviceToServer(Context c){
+	Device result = null;
 	try {
 	    // get device
 	    if(mDeviceDataProvider == null){
 		mDeviceDataProvider = new DeviceDataProvider();
 	    }
 	    Device d = mDeviceDataProvider.getDevice(c);
+	    d.setApp(mAppName);
 	    // save it
+	    int resultId = 0;
 	    DeviceRespond dr = mConnector.saveDevice(d);
 	    if (dr == null || dr.hasError()) {
-		System.err.print(dr.getMessage());
-		resultId = 0;
+		System.err.print(dr.getMessage());		
 	    } else {
-		resultId = dr.getContext().getDeviceID();
+		result = dr.getContext();
+		resultId = result.getDeviceID();
 	    }
-	    // save id to shared preferences
-	    Editor e = mPreferences.edit();
-	    e.putInt(DEVICE_ID, resultId).commit();
-	    return resultId;
+	    // save id to shared preferences	    
+	    int savedId = mPreferences.getInt(DEVICE_ID, 0);
+	    if(savedId == 0 || resultId != savedId){
+		Editor e = mPreferences.edit();
+		e.putInt(DEVICE_ID, resultId).commit();
+	    }
+	    return result;
 	} catch (Exception e) {
 	    // catch anything here => if we already did registration so it's not
 	    // big problem about resending
 	    // for first installation exception is thrown little later
 	    e.printStackTrace();
 	}
-	return resultId;
+	return result;
     }
 
     /**

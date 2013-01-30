@@ -46,6 +46,9 @@ public class Device implements Serializable {
 
     @SerializedName("Model")
     private String mModel;
+    
+    @SerializedName("App")
+    private String mApp;
 
     public int getDeviceID() {
         return mDeviceID;
@@ -141,6 +144,14 @@ public class Device implements Serializable {
 
     public void setModel(String model) {
         mModel = model;
+    }
+
+    public String getApp() {
+	return mApp;
+    }
+
+    public void setApp(String app) {
+	mApp = app;
     }
 
 }

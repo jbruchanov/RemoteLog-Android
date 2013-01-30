@@ -49,8 +49,7 @@ public class GCMMessageHandler extends GCMAbstractMessageHandler {
     public void onTakeScreenshot(Context context, PushMessage pm) {
 	Context app = context.getApplicationContext();
 	if (app instanceof KnowsActiveActivity) {
-	    RLog.takeScreenshot(this, KEY_TAKESCREENSHOT,
-		    (KnowsActiveActivity) app);
+	    RLog.takeScreenshot(this, "",(KnowsActiveActivity) app);
 	} else {
 	    RLog.e(this,
 		    KEY_TAKESCREENSHOT
