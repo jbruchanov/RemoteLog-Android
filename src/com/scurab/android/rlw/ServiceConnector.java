@@ -1,9 +1,8 @@
 package com.scurab.android.rlw;
 
-import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -159,14 +158,21 @@ class ServiceConnector {
      */
     protected String sendRequest(String data, String url, String method)
 	    throws IOException {
+	
 	HttpURLConnection hc = openConnection(url, method);
-	// write request
-	hc.getOutputStream().write(data.getBytes());
-	hc.getOutputStream().flush();
-	// read response
-	String respond = read(hc.getInputStream());
-	hc.disconnect();
-	return respond;
+	String response = null;
+	try {
+	    // write request
+	    hc.getOutputStream().write(data.getBytes());
+	    // hc.getOutputStream().flush();
+	    // read response
+	    response = read(hc.getInputStream());
+	    hc.disconnect();
+	} catch (IOException e) {
+	    e.printStackTrace();
+	    throw e;
+	}
+	return response;
     }
 
     /**
@@ -220,16 +226,15 @@ class ServiceConnector {
     }
 
     protected String read(InputStream is) throws IOException {
-	BufferedReader br = new BufferedReader(new InputStreamReader(is));
-
-	StringBuilder sb = new StringBuilder();
-
-	String line;
-	while ((line = br.readLine()) != null) {
-	    sb.append(line);
+	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	byte[] buffer = new byte[8*1024];
+	int len;
+	while ((len = is.read(buffer)) > -1) {
+	    baos.write(buffer, 0, len);
 	}
+	baos.flush();
 
-	return sb.toString();
+	return new String(baos.toByteArray());
     }
 
     public SettingsRespond loadSettings(int deviceId, String appName)
