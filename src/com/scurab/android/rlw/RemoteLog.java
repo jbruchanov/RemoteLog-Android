@@ -427,11 +427,11 @@ public final class RemoteLog {
 	    if (dr == null){
 		RLog.e(this, "SaveDevice response is null");
 	    } else {
-		if(dr.hasError()){
+		if (dr.hasError()) {
 		    RLog.e(this, "SaveDevice has error:" + dr.getMessage());
-		}else{
-        		result = dr.getContext();
-        		resultId = result.getDeviceID();
+		} else {
+		    result = dr.getContext();
+		    resultId = result.getDeviceID();
 		}
 	    }
 	    // save id to shared preferences	    
