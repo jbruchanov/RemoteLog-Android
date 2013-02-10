@@ -26,7 +26,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.scurab.android.KillAppException;
 import com.scurab.gwt.rlw.shared.model.Device;
-import com.scurab.gwt.rlw.shared.model.DeviceRespond;
+import com.scurab.gwt.rlw.shared.model.DeviceResponse;
 import com.scurab.gwt.rlw.shared.model.LogItem;
 import com.scurab.gwt.rlw.shared.model.LogItemBlobRequest;
 import com.scurab.gwt.rlw.shared.model.Settings;
@@ -423,12 +423,16 @@ public final class RemoteLog {
 	    d.setApp(mAppName);
 	    // save it
 	    int resultId = 0;
-	    DeviceRespond dr = mConnector.saveDevice(d);
-	    if (dr == null || dr.hasError()) {
-		System.err.print(dr.getMessage());		
+	    DeviceResponse dr = mConnector.saveDevice(d);
+	    if (dr == null){
+		RLog.e(this, "SaveDevice response is null");
 	    } else {
-		result = dr.getContext();
-		resultId = result.getDeviceID();
+		if(dr.hasError()){
+		    RLog.e(this, "SaveDevice has error:" + dr.getMessage());
+		}else{
+        		result = dr.getContext();
+        		resultId = result.getDeviceID();
+		}
 	    }
 	    // save id to shared preferences	    
 	    int savedId = mPreferences.getInt(DEVICE_ID, 0);

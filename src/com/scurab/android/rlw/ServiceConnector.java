@@ -27,7 +27,7 @@ import android.util.Base64;
 
 import com.google.gson.Gson;
 import com.scurab.gwt.rlw.shared.model.Device;
-import com.scurab.gwt.rlw.shared.model.DeviceRespond;
+import com.scurab.gwt.rlw.shared.model.DeviceResponse;
 import com.scurab.gwt.rlw.shared.model.LogItem;
 import com.scurab.gwt.rlw.shared.model.LogItemBlobRequest;
 import com.scurab.gwt.rlw.shared.model.LogItemBlobRespond;
@@ -100,13 +100,13 @@ class ServiceConnector {
      * @return
      * @throws IOException
      */
-    public DeviceRespond saveDevice(Device... d) throws IOException {
+    public DeviceResponse saveDevice(Device... d) throws IOException {
 	String url = mUrl + REGS_URL;
 	String json = mGson.toJson(d);
 	// write request
 	String respond = sendRequest(json, url, HTTP_POST);
 	// parse response
-	DeviceRespond dr = mGson.fromJson(respond, DeviceRespond.class);
+	DeviceResponse dr = mGson.fromJson(respond, DeviceResponse.class);
 	return dr;
     }
 
@@ -214,6 +214,7 @@ class ServiceConnector {
 	if(!HTTP_GET.equals(httpMethod)){
 	    hc.setDoOutput(true);
 	}
+	hc.setUseCaches(false);
 	hc.setDefaultUseCaches(false);
 	return hc;
     }
