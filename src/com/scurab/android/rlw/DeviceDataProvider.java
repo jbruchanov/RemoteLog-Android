@@ -7,12 +7,14 @@ import java.util.regex.Pattern;
 import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
+import android.provider.Settings;
 import android.telephony.TelephonyManager;
 import android.util.DisplayMetrics;
 
@@ -32,6 +34,12 @@ public class DeviceDataProvider {
 	    .compile("[a-zA-Z0-9\\+\\.\\_\\%\\-\\+]{1,256}" + "\\@"
 		    + "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}" + "(" + "\\."
 		    + "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}" + ")+");
+    
+    private static int sVersion = 0; 
+    
+    static{
+	initVersion();
+    }
 
     /**
      * Get base Device info object for registration
@@ -41,17 +49,50 @@ public class DeviceDataProvider {
      */
     public Device getDevice(Context c) {
 	Device d = new Device();
-	d.setBrand(Build.MANUFACTURER);
-	// d.setDescription();
-	d.setDetail(getDetails(c));
-	d.setDevUUID(Build.SERIAL);
-	d.setModel(Build.MODEL);
-	d.setOwner(getOwner(c));
-	d.setPlatform(PLATFORM);
-	d.setResolution(getResolution(c));
-	d.setVersion(String.valueOf(Build.VERSION.SDK_INT));
-	d.setPushID(getPushId(c));
+	d.setVersion(String.valueOf(sVersion));
+	try{
+	    d.setBrand(getManufacturer());
+	    // d.setDescription();
+	    d.setDetail(getDetails(c));
+	    d.setDevUUID(getSerialNumber(c));
+	    d.setModel(Build.MODEL);
+	    d.setOwner(getOwner(c));
+	    d.setPlatform(PLATFORM);
+	    d.setResolution(getResolution(c));
+	    d.setPushID(getPushId(c));
+	}catch(Exception e){
+	    d.setDescription(e.getMessage() + "\n"+ RemoteLog.getStackTrace(e));
+	}
 	return d;
+    }
+    
+    @SuppressLint("InlinedApi")
+    private static void initVersion(){	
+	try{
+	    sVersion = Build.VERSION.SDK_INT; 
+	}catch(Throwable e){
+	    try {
+		sVersion = Integer.parseInt(Build.VERSION.SDK);
+	    } finally{}
+	}
+    }      
+    
+    private String getManufacturer(){	
+	if(sVersion >= 4){
+	    return Build.MANUFACTURER;
+	}else{
+	    return "API_LEVEL_4_MIN";
+	}
+    }
+    
+    private String getSerialNumber(Context c){
+	if(sVersion >= 9){
+	    return Build.SERIAL;
+	}else if(Build.VERSION.SDK_INT >= 3){
+	    return Settings.Secure.getString(c.getContentResolver(),Settings.Secure.ANDROID_ID);
+	}else{
+	    return "API_LEVEL_3_MIN";
+	}
     }
 
     /**
