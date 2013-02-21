@@ -370,9 +370,11 @@ public final class RemoteLog {
 	}
 	try {
 	    mSettings = mConnector.loadSettings(mDeviceID, mAppName);
-	    onSettings(mSettings);
-	    if (callback != null) {
-		callback.call(getSettings());
+	    if(mSettings != null){
+    	    onSettings(mSettings);
+    	    if (callback != null) {
+    		callback.call(getSettings());
+    	    }
 	    }
 	} catch (Exception e) {
 	    e.printStackTrace();
