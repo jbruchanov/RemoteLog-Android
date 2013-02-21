@@ -164,7 +164,7 @@ public class RLog {
 	}
     }
     public static void e(Object source, String message, Throwable t) {
-	e(source, ERROR2, message, t);
+	e(source, ERROR2 + "[" + t.getClass().getSimpleName() +  "]", message, t);
     }
 
     public static void e(Object source, String category, String message, Throwable t) {
