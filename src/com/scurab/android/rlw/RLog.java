@@ -160,11 +160,12 @@ public class RLog {
 
     public static void e(Object source, Throwable t) {
 	if ((sMode & ERROR) == ERROR) {
-	    e(source, ERROR2, t);
-	}
+	    e(source, ERROR2, "[" + t.getClass().getSimpleName() +  "]", t);
     }
+    }
+
     public static void e(Object source, String message, Throwable t) {
-	e(source, ERROR2 + "[" + t.getClass().getSimpleName() +  "]", message, t);
+	e(source, ERROR2, message, t);
     }
 
     public static void e(Object source, String category, String message, Throwable t) {
