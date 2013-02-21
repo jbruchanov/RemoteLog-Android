@@ -2,6 +2,7 @@ package com.scurab.android.rlw;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 import android.Manifest;
@@ -10,12 +11,14 @@ import android.accounts.AccountManager;
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
 
 import com.google.android.gcm.GCMRegistrar;
@@ -30,6 +33,8 @@ import com.scurab.gwt.rlw.shared.model.Device;
 public class DeviceDataProvider {
 
     private static final String PLATFORM = "Android";
+
+    private static final String SHARED_PREF_UUID = "UUID";
     public static final Pattern EMAIL_ADDRESS = Pattern
 	    .compile("[a-zA-Z0-9\\+\\.\\_\\%\\-\\+]{1,256}" + "\\@"
 		    + "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}" + "(" + "\\."
@@ -84,16 +89,30 @@ public class DeviceDataProvider {
 	    return "API_LEVEL_4_MIN";
 	}
     }
-    
-    private String getSerialNumber(Context c){
-	if(sVersion >= 9){
-	    return Build.SERIAL;
-	}else if(Build.VERSION.SDK_INT >= 3){
-	    return Settings.Secure.getString(c.getContentResolver(),Settings.Secure.ANDROID_ID);
-	}else{
-	    return "API_LEVEL_3_MIN";
-	}
+
+    public static String getSerialNumber(Context c) {
+        String v = null;
+        if (sVersion >= 9) {
+            v = Build.SERIAL;
+        } else if (Build.VERSION.SDK_INT >= 3) {
+            v = Settings.Secure.getString(c.getContentResolver(), Settings.Secure.ANDROID_ID);
+        }
+        if(TextUtils.isEmpty(v)){
+            v = getGeneratedUUID(c);
+        }
+        return v;
     }
+
+    private static String getGeneratedUUID(Context c){
+        SharedPreferences sp = c.getSharedPreferences("RLDevice",Context.MODE_PRIVATE);
+        String uuid = sp.getString(SHARED_PREF_UUID, null);
+        if(uuid == null){
+            uuid = UUID.randomUUID().toString();
+            sp.edit().putString(SHARED_PREF_UUID, uuid).commit();
+        }
+        return uuid;
+    }
+
 
     /**
      * Return push token if device is sucessfuly registered, otherwise null

@@ -18,11 +18,10 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 
+import com.scurab.android.Base64;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
-
-import android.util.Base64;
 
 import com.google.gson.Gson;
 import com.scurab.gwt.rlw.shared.model.Device;

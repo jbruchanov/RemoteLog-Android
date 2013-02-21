@@ -1,17 +1,17 @@
 package com.scurab.android;
 
+import android.os.Build;
 import android.util.Log;
-
 import com.scurab.android.rlw.ILog;
-import com.scurab.android.rlw.RLog;
 
 /**
  * Basic android LogAdapter for using together with RLog<br/>
- * {@link RLog#setLog(ILog)}
+ * {@link com.scurab.android.rlw.RLog#setLog(com.scurab.android.rlw.ILog)}
+ * This class is for Android 1.x
  * @author Jiri Bruchanov
  *
  */
-public class AndroidLogAdapter implements ILog {
+public class AndroidLogAdapter1 implements ILog {
 
     @Override
     public void i(Object source, String category, String msg) {
@@ -45,7 +45,7 @@ public class AndroidLogAdapter implements ILog {
 
     @Override
     public void wtf(Object source, String category, String msg) {
-	Log.wtf(category, msg);	
+        //not implemented in SDK < 8
     }
 
     @Override
