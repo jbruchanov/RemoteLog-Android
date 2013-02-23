@@ -50,6 +50,9 @@ public class Device implements Serializable {
     @SerializedName("App")
     private String mApp;
 
+    @SerializedName("AppVersion")
+    private String mAppVersion;
+
     public int getDeviceID() {
         return mDeviceID;
     }
@@ -152,6 +155,14 @@ public class Device implements Serializable {
 
     public void setApp(String app) {
 	mApp = app;
+    }
+
+    public String getAppVersion() {
+        return mAppVersion;
+    }
+
+    public void setAppVersion(String appVersion) {
+        mAppVersion = appVersion;
     }
 
 }
