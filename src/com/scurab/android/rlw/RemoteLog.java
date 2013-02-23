@@ -310,7 +310,7 @@ public final class RemoteLog {
 	String projectId = sSelf.mPreferences.getString(PUSH, null);
 	// if there is pending GCM registration and we have a device
 	// ID from server aswell
-	boolean gcmRegistered = GCMRegistrar.isRegisteredOnServer(c);
+	boolean gcmRegistered = GCMRegistrar.isRegisteredOnServer(c) && !TextUtils.isEmpty(GCMRegistrar.getRegistrationId(c));
 	if (projectId != null) {
 	    if (!gcmRegistered) {// if we dont have push
 				 // registration
@@ -423,6 +423,7 @@ public final class RemoteLog {
 	    }
 	    Device d = mDeviceDataProvider.getDevice(c);
 	    d.setApp(mAppName);
+        d.setAppVersion(mAppVersion);
 	    // save it
 	    int resultId = 0;
 	    DeviceResponse dr = mConnector.saveDevice(d);
