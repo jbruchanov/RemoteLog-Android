@@ -136,7 +136,7 @@ public class DeviceDataProvider {
      */
     protected String getResolution(Context c) {
 	DisplayMetrics dm = c.getResources().getDisplayMetrics();
-	return String.format("%sx%s", dm.widthPixels, dm.heightPixels);
+	return String.format("%sx%s", Math.min(dm.widthPixels, dm.heightPixels), Math.max(dm.widthPixels, dm.heightPixels));
     }
 
     protected String getWifiMACAddress(Context c) {
