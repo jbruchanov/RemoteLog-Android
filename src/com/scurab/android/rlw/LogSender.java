@@ -48,35 +48,33 @@ class LogSender {
 	},"LogSender");
 	mWorkingThread.start();
     }
-    
-    private void workingThreadImpl(){
-	while(mIsRunning){
-	    checkPause();
-	    try {		
-		mWorkingLogItem = mItems.take();
-		LogItemRespond lir = mConnector.saveLogItem(mWorkingLogItem);
-		//check if there is a blob for write
-		LogItemBlobRequest blob = mCoData.get(mWorkingLogItem);
-		if(blob != null){
-		    //set logid for blob item
-		    blob.setLogItemID(lir.getContext().getID());
-		    byte[] data = blob.getData();
-		    //save data
-		    mConnector.saveLogItemBlob(blob, data);
-		    
-		    if(blob.isUncoughtError()){
-			//delete uncought exception => we sucesfuly sent
-			RemoteLog.getInstance().clearUncoughtException();
-		    }
-		}
-	    } catch (InterruptedException e) {
-		e.printStackTrace();
-	    } catch (IOException e) {
-		e.printStackTrace();
-	    }
-	    //dont forget to remove co-data
-	    mCoData.remove(mWorkingLogItem);
-	}
+
+    private void workingThreadImpl() {
+        while (mIsRunning) {
+            checkPause();
+            try {
+                mWorkingLogItem = mItems.take();
+                LogItemRespond lir = mConnector.saveLogItem(mWorkingLogItem);
+                //check if there is a blob for write
+                LogItemBlobRequest blob = mCoData.get(mWorkingLogItem);
+                if (lir != null && blob != null) {
+                    //set logid for blob item
+                    blob.setLogItemID(lir.getContext().getID());
+                    byte[] data = blob.getData();
+                    //save data
+                    mConnector.saveLogItemBlob(blob, data);
+
+                    if (blob.isUncoughtError()) {
+                        //delete uncought exception => we sucesfuly sent
+                        RemoteLog.getInstance().clearUncoughtException();
+                    }
+                }
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+            //dont forget to remove co-data
+            mCoData.remove(mWorkingLogItem);
+        }
     }
     
     /**
