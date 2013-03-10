@@ -156,10 +156,19 @@ public class DeviceDataProvider {
         }
 
         if(p.x == 0 || p.y == 0){
-            //use default display metrics, this values excludes bottom virtual button bar
-            DisplayMetrics dm = c.getResources().getDisplayMetrics();
-            p.set(dm.widthPixels, dm.heightPixels);
+           return getVirtualResolution(c);
         }
+        return String.format("%sx%s", Math.min(p.x, p.y), Math.max(p.x, p.y));
+    }
+
+    /**
+     * Returns display resolution excluding button bar, so this value is changing based on rotation
+     * @return
+     */
+    protected String getVirtualResolution(Context c){
+        DisplayMetrics dm = c.getResources().getDisplayMetrics();
+        Point p = new Point();
+        p.set(dm.widthPixels, dm.heightPixels);
         return String.format("%sx%s", Math.min(p.x, p.y), Math.max(p.x, p.y));
     }
 
@@ -200,6 +209,7 @@ public class DeviceDataProvider {
         if (Build.VERSION.SDK_INT >= 14) {
             result.put("PERMANENT_MENU_KEY", ViewConfiguration.get(c).hasPermanentMenuKey());
         }
+        result.put("VIRTUAL_RESOLUTION", getVirtualResolution(c));
         String s = RemoteLog.getGson().toJson(result);
         return s;
     }
