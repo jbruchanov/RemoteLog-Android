@@ -500,7 +500,7 @@ public final class RemoteLog {
     }
 
     /**
-     * @param if true, registration is checked and if it's not valid it will try again, re-registration is async => even if it's restarted return will be null
+     * @param checkReg if true, registration is checked and if it's not valid it will try again, re-registration is async => even if it's restarted return will be null
      * @return object if device is registered, otherwise null
      */
     protected static LogSender getLogSender(boolean checkReg) {
