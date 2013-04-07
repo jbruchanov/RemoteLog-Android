@@ -2,7 +2,7 @@ package com.scurab.android.rlw;
 
 import com.scurab.gwt.rlw.shared.model.LogItem;
 import com.scurab.gwt.rlw.shared.model.LogItemBlobRequest;
-import com.scurab.gwt.rlw.shared.model.LogItemRespond;
+import com.scurab.gwt.rlw.shared.model.LogItemResponse;
 
 import java.lang.Thread.State;
 import java.util.HashMap;
@@ -57,7 +57,7 @@ class LogSender {
             checkPause();
             try {
                 mWorkingLogItem = mItems.take();
-                LogItemRespond lir = mConnector.saveLogItem(mWorkingLogItem);
+                LogItemResponse lir = mConnector.saveLogItem(mWorkingLogItem);
                 //check if there is a blob for write
                 LogItemBlobRequest blob = mCoData.get(mWorkingLogItem);
                 if (lir != null && blob != null) {

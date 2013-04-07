@@ -2,7 +2,7 @@ package com.scurab.gwt.rlw.shared.model;
 
 import com.google.gson.annotations.SerializedName;
 
-public abstract class Respond<T> {
+public abstract class Response<T> {
 
     @SerializedName("Type")
     private String mType;
@@ -19,25 +19,25 @@ public abstract class Respond<T> {
     @SerializedName("Count")
     private int mCount;
 
-    public Respond() {
+    public Response() {
         mMessage = "OK";
     }
 
-    public Respond(T context) {
+    public Response(T context) {
         mMessage = "OK";
         mContext = context;
     }
 
-    public Respond(String msg) {
+    public Response(String msg) {
         mMessage = msg;
     }
 
-    public Respond(String msg, T context) {
+    public Response(String msg, T context) {
         mMessage = msg;
         mContext = context;
     }
 
-    public Respond(Throwable t) {
+    public Response(Throwable t) {
         mMessage = t.getMessage();
         mType = t.getClass().getName();
         hasError = true;

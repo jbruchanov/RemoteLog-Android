@@ -98,13 +98,13 @@ class ServiceConnector {
      * @return
      * @throws IOException
      */
-    public LogItemRespond saveLogItem(LogItem... d) throws IOException {
+    public LogItemResponse saveLogItem(LogItem... d) throws IOException {
         String url = mUrl + LOGS_URL;
         String json = mGson.toJson(d);
         // write request
         String respond = sendRequest(json, url, HTTP_POST);
         // parse response
-        LogItemRespond dr = mGson.fromJson(respond, LogItemRespond.class);
+        LogItemResponse dr = mGson.fromJson(respond, LogItemResponse.class);
         return dr;
     }
 
@@ -116,7 +116,7 @@ class ServiceConnector {
      * @return
      * @throws IOException
      */
-    public LogItemBlobRespond saveLogItemBlob(LogItemBlobRequest req,
+    public LogItemBlobResponse saveLogItemBlob(LogItemBlobRequest req,
                                               byte[] data) throws IOException {
         String json = mGson.toJson(req);
         String url = String.format("%s%s?%s", mUrl, LOGS_URL,
@@ -124,8 +124,8 @@ class ServiceConnector {
         // write request
         String respond = sendRequest(data, url, HTTP_PUT);
         // parse response
-        LogItemBlobRespond dr = mGson.fromJson(respond,
-                LogItemBlobRespond.class);
+        LogItemBlobResponse dr = mGson.fromJson(respond,
+                LogItemBlobResponse.class);
         return dr;
     }
 
@@ -219,14 +219,14 @@ class ServiceConnector {
         return new String(baos.toByteArray());
     }
 
-    public SettingsRespond loadSettings(int deviceId, String appName)
+    public SettingsResponse loadSettings(int deviceId, String appName)
             throws IOException {
         HttpURLConnection hc = openConnection(
                 mUrl + String.format(SETTINGS_TEMPLATE_URL, deviceId, appName),
                 HTTP_GET);
         // read response
         String respond = read(hc.getInputStream());
-        SettingsRespond result = mGson.fromJson(respond, SettingsRespond.class);
+        SettingsResponse result = mGson.fromJson(respond, SettingsResponse.class);
         hc.disconnect();
         return result;
     }

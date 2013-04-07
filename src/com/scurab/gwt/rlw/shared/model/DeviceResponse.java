@@ -1,6 +1,6 @@
 package com.scurab.gwt.rlw.shared.model;
 
-public class DeviceResponse extends Respond<Device> {
+public class DeviceResponse extends Response<Device> {
 
     public DeviceResponse() {
         super();

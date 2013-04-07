@@ -65,7 +65,7 @@ public final class RemoteLog {
     /* Working stuff */
     private ServiceConnector mConnector;
     private SharedPreferences mPreferences;
-    private SettingsRespond mSettings;
+    private SettingsResponse mSettings;
     private Application mApplication;
 
     private String mServerLocation;
@@ -351,7 +351,7 @@ public final class RemoteLog {
      * @param callback
      * @throws IllegalStateException
      */
-    public void loadSettings(AsyncCallback<SettingsRespond> callback)
+    public void loadSettings(AsyncCallback<SettingsResponse> callback)
             throws IllegalStateException {
         if (mDeviceID == 0) {
             throw new IllegalStateException(
@@ -373,7 +373,7 @@ public final class RemoteLog {
         }
     }
 
-    protected void onSettings(SettingsRespond resp) {
+    protected void onSettings(SettingsResponse resp) {
         try {
             if (resp.getCount() > 0) {
                 Settings[] ss = resp.getContext();
@@ -598,7 +598,7 @@ public final class RemoteLog {
      *
      * @return
      */
-    public SettingsRespond getSettings() {
+    public SettingsResponse getSettings() {
         return mSettings;
     }
 
