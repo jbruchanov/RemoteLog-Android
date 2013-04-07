@@ -12,6 +12,8 @@ import java.io.ByteArrayOutputStream;
 
 public class RLog {
 
+    private static boolean sLocalMode = false;
+
     private static final String ERROR2 = "Error";
 
     private static final String SEPARATOR = "|";
@@ -318,9 +320,10 @@ public class RLog {
      */
     public static void send(Object source, String category, String msg,
                             LogItemBlobRequest libr) {
-        if (sMode == TURN_OFF) {
+        if(sLocalMode || sMode == TURN_OFF){
             return;
         }
+
         LogItem li = RemoteLog.createLogItem();
         if (li == null) {// not yet initialized
             return;
@@ -438,5 +441,13 @@ public class RLog {
             return ALL;
         }
         return result;
+    }
+
+    /**
+     * Set local mode to avoid sending logitems to server
+     * @param localmode true to not send items to server
+     */
+    public static void setLocalMode(boolean localmode){
+        sLocalMode = localmode;
     }
 }
