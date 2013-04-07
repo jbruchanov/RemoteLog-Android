@@ -1,14 +1,14 @@
 package com.scurab.gwt.rlw.shared.model;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.io.Serializable;
 import java.util.Date;
-
-import com.google.gson.annotations.SerializedName;
 
 public class LogItem implements Serializable {
 
     /**
-     * 
+     *
      */
     private static final long serialVersionUID = 7649642015381756913L;
 
@@ -29,7 +29,7 @@ public class LogItem implements Serializable {
 
     @SerializedName("Category")
     private String mCategory;
-    
+
     @SerializedName("Source")
     private String mSource;
 
@@ -115,11 +115,11 @@ public class LogItem implements Serializable {
     }
 
     public String getSource() {
-	return mSource;
+        return mSource;
     }
 
     public void setSource(String source) {
-	mSource = source;
+        mSource = source;
     }
 
 }

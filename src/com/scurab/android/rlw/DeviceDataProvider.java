@@ -1,11 +1,5 @@
 package com.scurab.android.rlw;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.UUID;
-import java.util.regex.Pattern;
-
 import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -22,12 +16,17 @@ import android.provider.Settings;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
-
 import android.view.Display;
 import android.view.ViewConfiguration;
 import android.view.WindowManager;
 import com.google.android.gcm.GCMRegistrar;
 import com.scurab.gwt.rlw.shared.model.Device;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.UUID;
+import java.util.regex.Pattern;
 
 /**
  * Help class for getting info about device
@@ -143,9 +142,9 @@ public class DeviceDataProvider {
         WindowManager wm = (WindowManager) c.getSystemService(Context.WINDOW_SERVICE);
         Display d = wm.getDefaultDisplay();
         Point p = new Point();
-        if(Build.VERSION.SDK_INT >= 17){
+        if (Build.VERSION.SDK_INT >= 17) {
             d.getRealSize(p);
-        }else if(Build.VERSION.SDK_INT >= 14){ //it's hidden, maybe it is in lower versions
+        } else if (Build.VERSION.SDK_INT >= 14) { //it's hidden, maybe it is in lower versions
             try {
                 Method m = Display.class.getMethod("getRealSize", Point.class);
                 m.invoke(d, p);
@@ -155,17 +154,18 @@ public class DeviceDataProvider {
             }
         }
 
-        if(p.x == 0 || p.y == 0){
-           return getVirtualResolution(c);
+        if (p.x == 0 || p.y == 0) {
+            return getVirtualResolution(c);
         }
         return String.format("%sx%s", Math.min(p.x, p.y), Math.max(p.x, p.y));
     }
 
     /**
      * Returns display resolution excluding button bar, so this value is changing based on rotation
+     *
      * @return
      */
-    protected String getVirtualResolution(Context c){
+    protected String getVirtualResolution(Context c) {
         DisplayMetrics dm = c.getResources().getDisplayMetrics();
         Point p = new Point();
         p.set(dm.widthPixels, dm.heightPixels);

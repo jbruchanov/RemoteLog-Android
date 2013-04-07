@@ -6,16 +6,16 @@ public abstract class Respond<T> {
 
     @SerializedName("Type")
     private String mType;
-    
+
     @SerializedName("Message")
     private String mMessage;
-    
+
     @SerializedName("HasError")
     private boolean hasError;
 
     @SerializedName("Context")
     private T mContext;
-    
+
     @SerializedName("Count")
     private int mCount;
 

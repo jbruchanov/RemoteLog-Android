@@ -1,13 +1,13 @@
 package com.scurab.gwt.rlw.shared.model;
 
-import java.io.Serializable;
-
 import com.google.gson.annotations.SerializedName;
+
+import java.io.Serializable;
 
 public class Device implements Serializable {
 
     /**
-     * 
+     *
      */
     private static final long serialVersionUID = -5526599861310748107L;
 
@@ -46,7 +46,7 @@ public class Device implements Serializable {
 
     @SerializedName("Model")
     private String mModel;
-    
+
     @SerializedName("App")
     private String mApp;
 
@@ -150,11 +150,11 @@ public class Device implements Serializable {
     }
 
     public String getApp() {
-	return mApp;
+        return mApp;
     }
 
     public void setApp(String app) {
-	mApp = app;
+        mApp = app;
     }
 
     public String getAppVersion() {

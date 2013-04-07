@@ -1,25 +1,25 @@
 package com.scurab.gwt.rlw.shared.model;
 
-import java.io.Serializable;
-
 import com.google.gson.annotations.SerializedName;
+
+import java.io.Serializable;
 
 public class Settings implements Serializable {
 
     /**
-     * 
+     *
      */
     private static final long serialVersionUID = 1680757323178371221L;
 
     @SerializedName("SettingsID")
     private int mSettingsID;
-    
+
     @SerializedName("AppName")
     private String mAppName;
-    
+
     @SerializedName("DeviceID")
     private Integer mDeviceID;
-    
+
     @SerializedName("JsonValue")
     private String mJsonValue;
 

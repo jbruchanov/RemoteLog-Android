@@ -8,35 +8,35 @@ public class LogItemBlobRequest {
     public static final String MIME_TEXT_JSON = "text/json";
     public static final String MIME_IMAGE_JPEG = "image/jpeg";
     public static final String MIME_IMAGE_PNG = "image/png";
-    
+
     @SerializedName("LogItemID")
     private int mLogItemID;
-    
+
     @SerializedName("MimeType")
     private String mMimeType;
-    
+
     @SerializedName("DataLength")
     private int mDataLength;
-    
+
     @SerializedName("FileName")
     private String mFileName;
 
     //just container, dont serialize it by gson
     private final transient byte[] mData;
-    
+
     public LogItemBlobRequest() {
-	mData = null;
+        mData = null;
     }
-    
+
     private transient boolean mIsUncoughtError = false;
-    
+
     public LogItemBlobRequest(String mime, String fileName, byte[] data) {
         mMimeType = mime;
         mDataLength = data.length;
         mFileName = fileName;
         mData = data;
     }
-    
+
     public int getLogItemID() {
         return mLogItemID;
     }
@@ -70,14 +70,14 @@ public class LogItemBlobRequest {
     }
 
     public byte[] getData() {
-	return mData;
+        return mData;
     }
 
     public boolean isUncoughtError() {
-	return mIsUncoughtError;
+        return mIsUncoughtError;
     }
 
     public void setIsUncoughtError(boolean isUncoughtError) {
-	mIsUncoughtError = isUncoughtError;
+        mIsUncoughtError = isUncoughtError;
     }
 }
