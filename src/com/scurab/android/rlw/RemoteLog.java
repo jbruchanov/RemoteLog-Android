@@ -1,16 +1,25 @@
 package com.scurab.android.rlw;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Application;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.net.Uri;
+import android.os.Handler;
+import android.text.Html;
 import android.text.TextUtils;
+import android.widget.Toast;
 import com.google.android.gcm.GCMRegistrar;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.gson.*;
 import com.scurab.android.KillAppException;
+import com.scurab.android.KnowsActiveActivity;
+import com.scurab.android.settings.Update;
 import com.scurab.gwt.rlw.shared.model.*;
 
 import javax.net.ssl.TrustManager;
@@ -45,6 +54,9 @@ import java.util.Stack;
  */
 public final class RemoteLog {
 
+    public static final String SETTINGS_R_LOG = "RLog";
+    public static final String SETTINGS_SHOW_UPDATE_TOAST = "ShowUpdateToast";
+    public static final String SETTINGS_LATEST_BUILD = "LatestBuild";
     //    private static SimpleDateFormat DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss.SSS");
     private static Gson sGson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss.SSS").create();
 
@@ -327,7 +339,7 @@ public final class RemoteLog {
         // SETTINGS
         sSelf.mSettings = sSelf.mConnector.loadSettings(sSelf.mDeviceID,
                 sSelf.mAppName);
-        sSelf.onSettings(sSelf.mSettings);
+        sSelf.onSettings(sSelf.mSettings, c);
 
         //UNCAUGHT Exception
         sSelf.checkSavedUncoughtException();
@@ -363,7 +375,7 @@ public final class RemoteLog {
         try {
             mSettings = mConnector.loadSettings(mDeviceID, mAppName);
             if (mSettings != null) {
-                onSettings(mSettings);
+                onSettings(mSettings, null);
                 if (callback != null) {
                     callback.call(getSettings());
                 }
@@ -373,22 +385,27 @@ public final class RemoteLog {
         }
     }
 
-    protected void onSettings(SettingsResponse resp) {
+    protected void onSettings(SettingsResponse resp, final Context c) {
         try {
             if (resp.getCount() > 0) {
+                boolean rlog = false;
                 Settings[] ss = resp.getContext();
                 // going from end, where should be device specific
                 for (int i = ss.length - 1; i >= 0; i--) {
-                    @SuppressWarnings("unchecked")
-                    HashMap<String, Object> vs = sGson.fromJson(
-                            ss[i].getJsonValue(), HashMap.class);
-                    if (vs != null && vs.containsKey("RLog")) {
-                        String logMode = String.valueOf(vs.get("RLog"));
-                        int parsed = RLog.getMode(logMode);
-                        if (parsed != -1) {
-                            RLog.setMode(parsed);
+                    String json = ss[i].getJsonValue();
+                    if(TextUtils.isEmpty(json)){
+                        continue;
+                    }
+
+                    JsonObject je = new JsonParser().parse(json).getAsJsonObject();
+                    if(je.has(SETTINGS_R_LOG)){
+                        //settings use only first found
+                        if (!rlog) {
+                            onSettingsRLog(c, je);
+                            rlog = true;
                         }
-                        break;
+                    }else if (je.has(Update.class.getSimpleName())){
+                        onSettingsUpdate(c, je);
                     }
                 }
             }
@@ -397,6 +414,78 @@ public final class RemoteLog {
             RLog.e(this, e);
             // ignore any error and let the code continue
             e.printStackTrace();
+        }
+    }
+
+    private void onSettingsRLog(final Context c, JsonObject je){
+        String logMode = String.valueOf(je.get(SETTINGS_R_LOG).getAsString());
+        int parsed = RLog.getMode(logMode);
+        if (parsed != -1) {
+            RLog.setMode(parsed);
+        }
+    }
+
+    private void onSettingsUpdate(final Context c, JsonObject je) {
+        if(c == null){
+            //context is necessary for every journey here
+            return;
+        }
+        //show update notification
+        final Update update = new Gson().fromJson(je.get(Update.class.getSimpleName()), Update.class);
+        if (!(TextUtils.isEmpty(update.build) && TextUtils.isEmpty(update.type))) {
+            //get builds
+            int latestbuild = Integer.parseInt(update.build);
+            int appbuild = Integer.parseInt(mAppBuild);
+            final CharSequence msg = TextUtils.isEmpty(update.message) ? "Update available on google play!" : Html.fromHtml(update.message);
+            //compare it
+            if (latestbuild > appbuild) {
+                final Handler mHandler = new Handler(c.getMainLooper());
+                //we have to run it in main thread
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            if (Update.TYPE_TOAST.equalsIgnoreCase(update.type)) {
+                                //show just a toast
+                                Toast.makeText(c, msg, Toast.LENGTH_LONG).show();
+                            } else if (Update.TYPE_DIALOG.equalsIgnoreCase(update.type)) {
+                                //show dialog
+                                Context o = c.getApplicationContext();
+                                //dialog must have activity context
+                                if (o instanceof KnowsActiveActivity) {
+                                    Activity a = ((KnowsActiveActivity) o).getCurrentActivity();
+                                    //if a is null it means app is not running now
+                                    if (a != null) {
+                                        AlertDialog.Builder b = new AlertDialog.Builder(a);
+                                        b.setTitle("Update").setMessage(msg)
+                                                .setPositiveButton("Update", new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        try{
+                                                            Intent i = new Intent(Intent.ACTION_VIEW);
+                                                            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                                            i.setData(Uri.parse("market://details?id=" + c.getApplicationContext().getPackageName()));
+                                                            c.startActivity(i);
+                                                        }catch(Exception e){
+                                                            e.printStackTrace();
+                                                            RLog.e(RemoteLog.this, e);
+                                                        }
+                                                    }
+                                                });
+                                        b.create().show();
+                                    } else {
+                                        RLog.d(RemoteLog.this, "Dialog update, current activity is null => can't show it");
+                                    }
+                                } else {
+                                    RLog.d(RemoteLog.this, "Dialog update, Application is not KnowsActiveActivity => can't show it");
+                                }
+                            }
+                        } catch (Exception e) {
+                            RLog.e(RemoteLog.this, e);
+                        }
+                    }
+                });
+            }
         }
     }
 
