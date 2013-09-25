@@ -17,8 +17,15 @@ import android.view.KeyEvent;
  */
 public class SOSListener {
 
+    public static final int VOLUME_CLICK_LIMIT = 20;
+
     public interface OnSOSListener {
         public void onSOS();
+    }
+
+    public enum Strategy{
+        SOS,
+        LONG_VOLUME_DOWN
     }
 
     private static final int STATE_START = 0;
@@ -35,13 +42,51 @@ public class SOSListener {
      */
     private int mCounter = 0;
 
+    private Strategy mStrategy = Strategy.LONG_VOLUME_DOWN;
+
     private final OnSOSListener mListener;
 
     public SOSListener(OnSOSListener listener) {
+        this(Strategy.LONG_VOLUME_DOWN, listener);
+    }
+
+    public SOSListener(Strategy strategy, OnSOSListener listener) {
         if (listener == null) {
             throw new IllegalArgumentException("Listener is null!");
         }
+        mStrategy = strategy;
         mListener = listener;
+    }
+
+    /**
+     * Call this method from activity to proper functionality
+     * @param key
+     */
+    public void dispatchKeyEvent(KeyEvent key){
+        if(mStrategy == Strategy.SOS){
+            dispatchKeyEventSOS(key);
+        }else if(mStrategy == Strategy.LONG_VOLUME_DOWN){
+            dispatchKeyEventVolumeDown(key);
+        }
+    }
+
+    /**
+     * Handle keyEvent for simple volume down long click...
+     * @param key
+     */
+    private void dispatchKeyEventVolumeDown(KeyEvent key) {
+        int keyCode = key.getKeyCode();
+        // handle only if volume keys are clicked
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN){
+            mCounter++;
+        } else{
+            reset();
+        }
+
+        if(mCounter > VOLUME_CLICK_LIMIT){
+            mListener.onSOS();
+            reset();
+        }
     }
 
     /**
@@ -49,7 +94,7 @@ public class SOSListener {
      *
      * @param key
      */
-    public void dispatchKeyEvent(KeyEvent key) {
+    private void dispatchKeyEventSOS(KeyEvent key) {
         int keyCode = key.getKeyCode();
         // handle only if volume keys are clicked
         if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
