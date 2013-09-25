@@ -101,10 +101,28 @@ public class DeviceDataProvider {
         } else if (Build.VERSION.SDK_INT >= 3) {
             v = Settings.Secure.getString(c.getContentResolver(), Settings.Secure.ANDROID_ID);
         }
+        if(!validateSerialNumber(v)){
+            v = null;
+        }
         if (TextUtils.isEmpty(v)) {
             v = getGeneratedUUID(c);
         }
         return v;
+    }
+
+    /**
+     * Checks if serial number is usual dummy stuff
+     * @param serialNumber
+     * @return true if it's fine
+     */
+    private static boolean validateSerialNumber(String serialNumber){
+        String[] values = {"UNKNOWN","0123456789ABCDEF", "0123456789"};
+        for(String v : values){
+            if(v.equalsIgnoreCase(serialNumber)){
+                return false;
+            }
+        }
+        return true;
     }
 
     private static String getGeneratedUUID(Context c) {
