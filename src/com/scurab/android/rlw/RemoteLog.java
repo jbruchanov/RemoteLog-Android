@@ -164,6 +164,16 @@ public final class RemoteLog {
         mTrustManager = manager;
     }
 
+    private static String mOwner = null;
+
+    /**
+     * Set/Override owner detectable from device
+     * @param value
+     */
+    public static void setOwner(String value){
+        mOwner = value;
+    }
+
     private static String mUsername;
     private static String mPassword;
 
@@ -505,6 +515,9 @@ public final class RemoteLog {
             Device d = mDeviceDataProvider.getDevice(c);
             d.setApp(mAppName);
             d.setAppVersion(mAppVersion);
+            if(mOwner != null){
+                d.setOwner(mOwner);
+            }
             // save it
             int resultId = 0;
             DeviceResponse dr = mConnector.saveDevice(d);
