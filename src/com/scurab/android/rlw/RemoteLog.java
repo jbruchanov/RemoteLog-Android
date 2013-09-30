@@ -515,7 +515,7 @@ public final class RemoteLog {
             Device d = mDeviceDataProvider.getDevice(c);
             d.setApp(mAppName);
             d.setAppVersion(mAppVersion);
-            if(mOwner != null){
+            if(!TextUtils.isEmpty(mOwner)){
                 d.setOwner(mOwner);
             }
             // save it
