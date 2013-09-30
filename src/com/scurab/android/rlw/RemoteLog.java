@@ -37,7 +37,7 @@ import java.util.Stack;
 /**
  * Base RemoteLog class<br/>
  * For every usage you have to call at least
- * {@link #init(Context, String, String, AsyncCallback)} to create first
+ * {@link #init(Application, String, String, AsyncCallback)} to create first
  * registration on RemoteLog Server.<br/>
  * <br/>
  * There are few <b>optional pre-init methods</b> to set some variables before
@@ -621,44 +621,25 @@ public final class RemoteLog {
     }
 
     /**
-     * Override default UncaughtExceptionHandler
+     * Set default handler for any thread
+     */
+    public static void catchUncaughtErrors() {
+        Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler(Thread.getDefaultUncaughtExceptionHandler()));
+    }
+    /**
+     * Override default UncaughtExceptionHandler for particular thread
      *
      * @param t
      */
     public static void catchUncaughtErrors(Thread t) {
-        final UncaughtExceptionHandler oldOne = t.getUncaughtExceptionHandler();
-        t.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
-            @Override
-            public void uncaughtException(Thread thread, Throwable ex) {
-                if (sLogSender == null) {
-                    // not initialized => unable to send it
-                } else if ((RLog.getMode() & RLog.ERROR) == RLog.ERROR) {
-                    Throwable[] ts = new Throwable[1];
-                    String stack = getStackTrace(ex, ts);
+        t.setUncaughtExceptionHandler(new UncaughtExceptionHandler(t.getUncaughtExceptionHandler()));
+    }
 
-                    LogItemBlobRequest libr = new LogItemBlobRequest(
-                            LogItemBlobRequest.MIME_TEXT_PLAIN,
-                            "fatalerror.txt", stack.getBytes());
-
-                    boolean isKillApp = (ex instanceof KillAppException);
-                    if (!isKillApp) {
-                        libr.setIsUncoughtError(true);
-                        String ce = sSelf.mPreferences.getString(UNCOUGHT_ERROR, "");
-                        String prefix = String.format("V:%s B:%s Date:%s", sSelf.mAppVersion, sSelf.mAppBuild, new Date().toGMTString());
-                        ce = String.format("%s \n%s\n\n%s", prefix, ts[0].getMessage(), stack, ce);
-                        sSelf.mPreferences.edit().putString(UNCOUGHT_ERROR, ce).commit();
-                    }
-
-                    RLog.send(this,
-                            isKillApp ? "KillApp"
-                                    : "UncaughtException", ts[0].getMessage(),
-                            libr);
-
-                    sLogSender.waitForEmptyQueue();
-                }
-                oldOne.uncaughtException(thread, ex);
-            }
-        });
+    private static void saveStack(Throwable t, String stack){
+        String ce = sSelf.mPreferences.getString(UNCOUGHT_ERROR, "");
+        String prefix = String.format("V:%s B:%s Date:%s", sSelf.mAppVersion, sSelf.mAppBuild, new Date().toGMTString());
+        ce = String.format("%s \n%s\n\n%s", prefix, t.getMessage(), stack, ce);
+        sSelf.mPreferences.edit().putString(UNCOUGHT_ERROR, ce).commit();
     }
 
     public static String getStackTrace(Throwable ex) {
@@ -735,5 +716,43 @@ public final class RemoteLog {
 
     public static boolean isInitialized() {
         return sSelf.sLogSender != null;
+    }
+
+    private static class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
+
+        private Thread.UncaughtExceptionHandler mOldHandler;
+
+        private UncaughtExceptionHandler(Thread.UncaughtExceptionHandler oldHandler) {
+            mOldHandler = oldHandler;
+        }
+
+        @Override
+        public void uncaughtException(Thread thread, Throwable ex) {
+            Throwable[] ts = new Throwable[1];
+            String stack = getStackTrace(ex, ts);
+
+            if (sLogSender == null) {
+                // not initialized => unable to send it
+                saveStack(ts[0], stack);
+            } else if ((RLog.getMode() & RLog.ERROR) == RLog.ERROR) {
+                LogItemBlobRequest libr = new LogItemBlobRequest(
+                        LogItemBlobRequest.MIME_TEXT_PLAIN,
+                        "fatalerror.txt", stack.getBytes());
+
+                boolean isKillApp = (ex instanceof KillAppException);
+                if (!isKillApp) {
+                    libr.setIsUncoughtError(true);
+                    saveStack(ts[0], stack);
+                }
+
+                RLog.send(this,
+                        isKillApp ? "KillApp"
+                                : "UncaughtException", ts[0].getMessage(),
+                        libr);
+
+                sLogSender.waitForEmptyQueue();
+            }
+            mOldHandler.uncaughtException(thread, ex);
+        }
     }
 }
