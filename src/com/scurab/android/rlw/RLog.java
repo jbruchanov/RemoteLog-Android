@@ -221,13 +221,14 @@ public class RLog {
      * @param msg
      * @parem c
      */
-    public static void takeScreenshot(Object source, String msg,
+    public static Bitmap takeScreenshot(Object source, String msg,
                                       KnowsActiveActivity c) {
+        Bitmap b = null;
         try {
             Activity a = c.getCurrentActivity();
             if (a != null) {
                 View v = a.getWindow().getDecorView();
-                takeScreenshot(source, msg, v);
+                b = takeScreenshot(source, msg, v);
             } else {
                 send(source, "Screenshot", "Current Activity is null\n" + msg);
             }
@@ -237,6 +238,7 @@ public class RLog {
                     String.format("%s\n%s", e.getMessage(),
                             RemoteLog.getStackTrace(e, null)));
         }
+        return b;
     }
 
     /**
@@ -246,8 +248,8 @@ public class RLog {
      * @param msg
      * @param act
      */
-    public static void takeScreenshot(Object source, String msg, Activity act) {
-        takeScreenshot(source, msg, act.getWindow().getDecorView());
+    public static Bitmap takeScreenshot(Object source, String msg, Activity act) {
+        return takeScreenshot(source, msg, act.getWindow().getDecorView());
     }
 
     /**
@@ -256,17 +258,19 @@ public class RLog {
      * @param source
      * @param msg
      * @param view
+     * @return Bitmap of screenshot, null if any problem or mode for screenshot is disabled
      */
-    public static void takeScreenshot(Object source, String msg, View view) {
+    public static Bitmap takeScreenshot(Object source, String msg, View view) {
         if (sMode == TURN_OFF || (sMode & SCREENSHOT) != SCREENSHOT) {
-            return;
+            return null;
         }
+        Bitmap b = null;
         try {
             // prepare view
             view.destroyDrawingCache();
             view.buildDrawingCache(false);
             // get bitmap
-            Bitmap b = view.getDrawingCache();
+            b = view.getDrawingCache();
             final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
             Exception e = null;
@@ -297,6 +301,7 @@ public class RLog {
             e(RLog.class, String.format("takeScreenshot\n%s\n%s",
                     e.getMessage(), RemoteLog.getStackTrace(e, null)));
         }
+        return b;
     }
 
     /**
