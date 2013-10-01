@@ -1,20 +1,15 @@
 package com.scurab.android.rlw;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.net.Uri;
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.view.View;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 
 /**
  * User: Joe Scurab
@@ -75,7 +70,7 @@ public class ScreenshotHelper {
     }
 
     /**
-     * Save bitmap into sdcard (must have permission!) and send gallery update broadcast
+     * Save bitmap phone's gallery
      * @param context
      * @param bitmap
      * @throws FileNotFoundException
