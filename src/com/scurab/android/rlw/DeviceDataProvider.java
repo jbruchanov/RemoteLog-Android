@@ -37,6 +37,7 @@ public class DeviceDataProvider {
 
     private static final String PLATFORM = "Android";
 
+    private static final String SHARED_PREF = "RemoteLog";
     private static final String SHARED_PREF_UUID = "UUID";
     public static final Pattern EMAIL_ADDRESS = Pattern
             .compile("[a-zA-Z0-9\\+\\.\\_\\%\\-\\+]{1,256}" + "\\@"
@@ -95,19 +96,35 @@ public class DeviceDataProvider {
     }
 
     public static String getSerialNumber(Context c) {
-        String v = null;
-        if (sVersion >= 9) {
-            v = Build.SERIAL;
-        } else if (Build.VERSION.SDK_INT >= 3) {
-            v = Settings.Secure.getString(c.getContentResolver(), Settings.Secure.ANDROID_ID);
+        SharedPreferences sp = c.getSharedPreferences(SHARED_PREF, Context.MODE_PRIVATE);
+        String uuid = sp.getString(SHARED_PREF_UUID, null);
+
+        if (TextUtils.isEmpty(uuid)) {
+            if (sVersion >= 9) {
+                uuid = Build.SERIAL;
+            } else if (Build.VERSION.SDK_INT >= 3) {
+                uuid = Settings.Secure.getString(c.getContentResolver(), Settings.Secure.ANDROID_ID);
+            }
+            if (!validateSerialNumber(uuid)) {
+                uuid = null;
+            }
+            if (TextUtils.isEmpty(uuid)) {
+                uuid = UUID.randomUUID().toString();
+            }
+            sp.edit().putString(SHARED_PREF_UUID, uuid).commit();
         }
-        if(!validateSerialNumber(v)){
-            v = null;
-        }
-        if (TextUtils.isEmpty(v)) {
-            v = getGeneratedUUID(c);
-        }
-        return v;
+        return uuid;
+    }
+
+    /**
+     * Overwrite any uuid with new one<br/>
+     * User it only if we are restoring
+     * @param c
+     * @param uuid
+     */
+    static void saveSerialNumber(Context c, String uuid){
+        SharedPreferences sp = c.getSharedPreferences(SHARED_PREF, Context.MODE_PRIVATE);
+        sp.edit().putString(SHARED_PREF_UUID, uuid).commit();
     }
 
     /**
@@ -124,17 +141,6 @@ public class DeviceDataProvider {
         }
         return true;
     }
-
-    private static String getGeneratedUUID(Context c) {
-        SharedPreferences sp = c.getSharedPreferences("RLDevice", Context.MODE_PRIVATE);
-        String uuid = sp.getString(SHARED_PREF_UUID, null);
-        if (uuid == null) {
-            uuid = UUID.randomUUID().toString();
-            sp.edit().putString(SHARED_PREF_UUID, uuid).commit();
-        }
-        return uuid;
-    }
-
 
     /**
      * Return push token if device is sucessfuly registered, otherwise null

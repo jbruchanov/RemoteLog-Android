@@ -3,6 +3,7 @@ package com.scurab.android.rlw;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Application;
+import android.app.backup.BackupManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -305,6 +306,9 @@ public final class RemoteLog {
         if (sSelf.mDeviceID == 0 || sResend) {
             device = sSelf.sendDeviceToServer(c);
             if (device != null) {
+                if(sSelf.mDeviceID == 0){
+                    new BackupManager(c).dataChanged();
+                }
                 sSelf.mDeviceID = device.getDeviceID();
             }
         }
@@ -716,6 +720,23 @@ public final class RemoteLog {
 
     public static boolean isInitialized() {
         return sSelf.sLogSender != null;
+    }
+
+    /**
+     * Called when UUID has been restored
+     */
+    static void onRestoreUUID(Context context, int deviceID) {
+        SharedPreferences sp = null;
+        if (sSelf != null) {
+            sSelf.mDeviceID = deviceID;
+            sp = sSelf.mPreferences;
+        }
+        if(sp == null){
+            sp = context.getSharedPreferences(
+                    RemoteLog.class.getSimpleName(), Context.MODE_PRIVATE);
+        }
+
+        sp.edit().putInt(DEVICE_ID, deviceID).commit();
     }
 
     private static class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
