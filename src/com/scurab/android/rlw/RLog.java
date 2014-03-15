@@ -20,7 +20,7 @@ public class RLog {
 
     /**
      * Completely turn off remote logging<br/>
-     * You should always have at least {@value #EXCEPTION} for getting uncought
+     * You should always have at least {@value #EXCEPTION} for getting uncaught
      * exceptions!
      */
     public static final int TURN_OFF = 0;
@@ -35,39 +35,39 @@ public class RLog {
      * Allow logging via {@link RLog#v(Object, String)} and
      * {@link RLog#v(Object, String, String)}
      */
-    public static final int VERBOSE = 2;
+    public static final int VERBOSE = 1 << 1;
 
     /**
      * Allow logging via {@link RLog#d(Object, String)} and
      * {@link RLog#d(Object, String, String)}
      */
-    public static final int DEBUG = 4;
+    public static final int DEBUG = 1 << 2;
 
     /**
      * Allow logging via {@link RLog#w(Object, String)} and
      * {@link RLog#w(Object, String, String)}
      */
-    public static final int WARNING = 8;
+    public static final int WARNING = 1 << 3;
 
     /**
      * Allow logging via {@link RLog#e(Object, String)} and
      * {@link RLog#e(Object, String, String)} and
      * {@link RLog#e(Object, String, Throwable)}
      */
-    public static final int ERROR = 16;
+    public static final int ERROR = 1 << 4;
 
     /**
-     * Allow logging any uncought exception<br/>
+     * Allow logging any uncaught exception<br/>
      * {@link RemoteLog#catchUncaughtErrors(Thread)} This value is default log
      * mode
      */
-    public static final int EXCEPTION = 32;
+    public static final int EXCEPTION = 1 << 5;
 
     /**
      * Allow logging via {@link RLog#wtf(Object, String)} and
      * {@link RLog#wtf(Object, String, String)}
      */
-    public static final int WTF = 64;
+    public static final int WTF = 1 << 6;
 
     /**
      * Allow logging via <br/>
@@ -75,7 +75,7 @@ public class RLog {
      * {@link RLog#takeScreenshot(Object, String, KnowsActiveActivity)}<br/>
      * {@link RLog#takeScreenshot(Object, String, View)}<br/>
      */
-    public static final int SCREENSHOT = 128;
+    public static final int SCREENSHOT = 1 << 7;
 
     /**
      * Allow any log way

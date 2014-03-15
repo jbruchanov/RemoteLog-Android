@@ -28,7 +28,7 @@ public class LogItemBlobRequest {
         mData = null;
     }
 
-    private transient boolean mIsUncoughtError = false;
+    private transient boolean mIsUncaughtError = false;
 
     public LogItemBlobRequest(String mime, String fileName, byte[] data) {
         mMimeType = mime;
@@ -73,11 +73,11 @@ public class LogItemBlobRequest {
         return mData;
     }
 
-    public boolean isUncoughtError() {
-        return mIsUncoughtError;
+    public boolean isUncaughtError() {
+        return mIsUncaughtError;
     }
 
-    public void setIsUncoughtError(boolean isUncoughtError) {
-        mIsUncoughtError = isUncoughtError;
+    public void setIsUncaughtError(boolean isUncaughtError) {
+        mIsUncaughtError = isUncaughtError;
     }
 }

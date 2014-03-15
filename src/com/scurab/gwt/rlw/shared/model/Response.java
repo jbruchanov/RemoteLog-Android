@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName;
 
 public abstract class Response<T> {
 
+    public static final String OK = "OK";
     @SerializedName("Type")
     private String mType;
 
@@ -20,11 +21,11 @@ public abstract class Response<T> {
     private int mCount;
 
     public Response() {
-        mMessage = "OK";
+        mMessage = OK;
     }
 
     public Response(T context) {
-        mMessage = "OK";
+        mMessage = OK;
         mContext = context;
     }
 

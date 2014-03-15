@@ -67,9 +67,9 @@ class LogSender {
                     //save data
                     mConnector.saveLogItemBlob(blob, data);
 
-                    if (blob.isUncoughtError()) {
-                        //delete uncought exception => we sucesfuly sent
-                        RemoteLog.getInstance().clearUncoughtException();
+                    if (blob.isUncaughtError()) {
+                        //delete uncaught exception => we successfuly sent
+                        RemoteLog.getInstance().clearUncaughtException();
                     }
                 }
             } catch (Throwable e) {
@@ -167,15 +167,4 @@ class LogSender {
             }
         }
     }
-
-//    public void start(){	
-//	if(mWorkingThread)
-//	mIsRunning = true;
-//	if(mPause){
-//	    mPause = false;
-//	    synchronized (mWorkingThread) {
-//		mWorkingThread.notify();
-//	    }
-//	}
-//    }
 }

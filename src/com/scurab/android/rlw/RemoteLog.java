@@ -27,12 +27,10 @@ import javax.net.ssl.TrustManager;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.net.MalformedURLException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Stack;
 
 /**
@@ -61,7 +59,7 @@ public final class RemoteLog {
     //    private static SimpleDateFormat DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss.SSS");
     private static Gson sGson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss.SSS").create();
 
-    public static String UNCOUGHT_ERROR = "UNCOUGHT_ERROR";
+    public static String UNCAUGHT_ERROR = "UNCAUGHT_ERROR";
     public static String PUSH_TOKEN = "PUSH_TOKEN";
 
     /**
@@ -356,16 +354,16 @@ public final class RemoteLog {
         sSelf.onSettings(sSelf.mSettings, c);
 
         //UNCAUGHT Exception
-        sSelf.checkSavedUncoughtException();
+        sSelf.checkSavedUncaughtException();
     }
 
-    private void checkSavedUncoughtException() {
-        String ueStack = mPreferences.getString(UNCOUGHT_ERROR, "");
+    private void checkSavedUncaughtException() {
+        String ueStack = mPreferences.getString(UNCAUGHT_ERROR, "");
         if (!TextUtils.isEmpty(ueStack)) {
             LogItemBlobRequest libr = new LogItemBlobRequest(
                     LogItemBlobRequest.MIME_TEXT_PLAIN,
                     "fatalerror.txt", ueStack.getBytes());
-            libr.setIsUncoughtError(true);
+            libr.setIsUncaughtError(true);
             RLog.send(this, "UncaughtException", "History stack trace", libr);
         }
     }
@@ -640,10 +638,10 @@ public final class RemoteLog {
     }
 
     private static void saveStack(Throwable t, String stack){
-        String ce = sSelf.mPreferences.getString(UNCOUGHT_ERROR, "");
+        String ce = sSelf.mPreferences.getString(UNCAUGHT_ERROR, "");
         String prefix = String.format("V:%s B:%s Date:%s", sSelf.mAppVersion, sSelf.mAppBuild, new Date().toGMTString());
         ce = String.format("%s \n%s\n\n%s", prefix, t.getMessage(), stack, ce);
-        sSelf.mPreferences.edit().putString(UNCOUGHT_ERROR, ce).commit();
+        sSelf.mPreferences.edit().putString(UNCAUGHT_ERROR, ce).commit();
     }
 
     public static String getStackTrace(Throwable ex) {
@@ -714,8 +712,8 @@ public final class RemoteLog {
         return sGson;
     }
 
-    public void clearUncoughtException() {
-        mPreferences.edit().putString(UNCOUGHT_ERROR, null).commit();
+    public void clearUncaughtException() {
+        mPreferences.edit().putString(UNCAUGHT_ERROR, null).commit();
     }
 
     public static boolean isInitialized() {
@@ -762,7 +760,7 @@ public final class RemoteLog {
 
                 boolean isKillApp = (ex instanceof KillAppException);
                 if (!isKillApp) {
-                    libr.setIsUncoughtError(true);
+                    libr.setIsUncaughtError(true);
                     saveStack(ts[0], stack);
                 }
 
