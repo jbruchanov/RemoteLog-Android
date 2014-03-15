@@ -9,6 +9,7 @@ import com.scurab.gwt.rlw.shared.model.LogItem;
 import com.scurab.gwt.rlw.shared.model.LogItemBlobRequest;
 
 import java.io.ByteArrayOutputStream;
+import java.lang.reflect.Method;
 
 public class RLog {
 
@@ -335,17 +336,36 @@ public class RLog {
         }
         li.setCategory(category);
         li.setMessage(msg);
-        if (source != null) {
-            String n = source.getClass().getSimpleName();
-            if (!(n != null && n.length() > 0)) {
-                n = "AnonymousClass";
-            }
-            li.setSource(n);
-        }
+        li.setSource(getObjectName(source));
         LogSender ls = RemoteLog.getLogSender(true);
         if (ls != null) {
             ls.addLogItem(li, libr);
         }
+    }
+
+    private static String getObjectName(Object source) {
+        if (source != null) {
+            String n = source.getClass().getSimpleName();
+            if (!(n != null && n.length() > 0)) {
+                //anon class
+                Class c = source.getClass();
+                Class encc = c.getEnclosingClass();
+                Method m = c.getEnclosingMethod();
+
+                Class<?>[] paramTypes = m.getParameterTypes();
+                StringBuilder sb = new StringBuilder();
+                for (Class clz : paramTypes) {
+                    sb.append(clz.getSimpleName()).append(", ");
+                }
+
+                if (sb.length() > 0) {
+                    sb.setLength(sb.length() - 2);
+                }
+
+                return String.format("%s.this.%s(%s)$AnonymousClass", encc.getSimpleName(), m.getName(), sb.toString());
+            }
+        }
+        return null;
     }
 
     public static int getMode() {
