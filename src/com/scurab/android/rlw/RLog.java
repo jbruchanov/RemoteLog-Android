@@ -344,9 +344,10 @@ public class RLog {
     }
 
     private static String getObjectName(Object source) {
+        String value = null;
         if (source != null) {
-            String n = source.getClass().getSimpleName();
-            if (!(n != null && n.length() > 0)) {
+            value = source.getClass().getSimpleName();
+            if (!(value != null && value.length() > 0)) {
                 //anon class
                 Class c = source.getClass();
                 Class encc = c.getEnclosingClass();
@@ -362,10 +363,10 @@ public class RLog {
                     sb.setLength(sb.length() - 2);
                 }
 
-                return String.format("%s.this.%s(%s)$AnonymousClass", encc.getSimpleName(), m.getName(), sb.toString());
+                value = String.format("%s.this.%s(%s)$AnonymousClass", encc.getSimpleName(), m.getName(), sb.toString());
             }
         }
-        return null;
+        return value;
     }
 
     public static int getMode() {
