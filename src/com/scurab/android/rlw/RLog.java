@@ -352,17 +352,22 @@ public class RLog {
                 Class encc = c.getEnclosingClass();
                 Method m = c.getEnclosingMethod();
 
-                Class<?>[] paramTypes = m.getParameterTypes();
-                StringBuilder sb = new StringBuilder();
-                for (Class clz : paramTypes) {
-                    sb.append(clz.getSimpleName()).append(", ");
-                }
 
-                if (sb.length() > 0) {
-                    sb.setLength(sb.length() - 2);
-                }
+                if (m != null) {
+                    StringBuilder sb = new StringBuilder();
+                    Class<?>[] paramTypes = m.getParameterTypes();
+                    if (paramTypes != null) {
+                        for (Class clz : paramTypes) {
+                            sb.append(clz.getSimpleName()).append(", ");
+                        }
 
-                return String.format("%s.this.%s(%s)$AnonymousClass", encc.getSimpleName(), m.getName(), sb.toString());
+                        if (sb.length() > 0) {
+                            sb.setLength(sb.length() - 2);
+                        }
+                    }
+                    return String.format("%s.this.%s(%s)$AnonymousClass", encc.getSimpleName(), m.getName(), sb.toString());
+                }
+                return String.format("%s.this.$AnonymousClass", encc.getSimpleName());
             }
         }
         return null;
