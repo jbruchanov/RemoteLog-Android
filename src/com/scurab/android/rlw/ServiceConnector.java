@@ -40,6 +40,10 @@ class ServiceConnector {
         }
     };
 
+    public ServiceConnector(String url) throws NoSuchAlgorithmException, KeyManagementException, MalformedURLException {
+        this(url, null, null, null);
+    }
+
     public ServiceConnector(String url, TrustManager manager, String username, String password)
             throws MalformedURLException, KeyManagementException,
             NoSuchAlgorithmException {
@@ -117,7 +121,7 @@ class ServiceConnector {
      * @throws IOException
      */
     public LogItemBlobResponse saveLogItemBlob(LogItemBlobRequest req,
-                                              byte[] data) throws IOException {
+                                               byte[] data) throws IOException {
         String json = mGson.toJson(req);
         String url = String.format("%s%s?%s", mUrl, LOGS_URL,
                 URLEncoder.encode(json, "UTF-8"));
