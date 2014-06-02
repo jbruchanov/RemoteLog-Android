@@ -48,8 +48,18 @@ public class DeviceDataProvider {
 
     private static int sVersion = 0;
 
+    private static String sCustomDeviceUUID;
+
     static {
         initVersion();
+    }
+
+    /**
+     * Override globally devive uuid by your value
+     * @param value
+     */
+    public static void setDeviceUUID(String value){
+        sCustomDeviceUUID = value;
     }
 
     /**
@@ -98,6 +108,10 @@ public class DeviceDataProvider {
     }
 
     public static String getSerialNumber(Context c) {
+        if (sCustomDeviceUUID != null) {
+            return sCustomDeviceUUID;
+        }
+
         SharedPreferences sp = c.getSharedPreferences(SHARED_PREF, Context.MODE_PRIVATE);
         String uuid = sp.getString(SHARED_PREF_UUID, null);
 
