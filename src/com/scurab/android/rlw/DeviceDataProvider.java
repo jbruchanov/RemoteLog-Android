@@ -108,12 +108,34 @@ public class DeviceDataProvider {
             if (!validateSerialNumber(uuid)) {
                 uuid = null;
             }
+
+            if (TextUtils.isEmpty(uuid)) {
+                uuid = getMACAddress(c);
+            }
+
             if (TextUtils.isEmpty(uuid)) {
                 uuid = UUID.randomUUID().toString();
             }
+
             sp.edit().putString(SHARED_PREF_UUID, uuid).commit();
         }
         return uuid;
+    }
+
+    /**
+     * Return MAC address of wifi NIC
+     * @param context
+     * @return value or null if any problem
+     */
+    static String getMACAddress(Context context) {
+        try {
+            WifiManager manager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+            WifiInfo info = manager.getConnectionInfo();
+            return info != null ? info.getMacAddress() : null;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /**
@@ -273,19 +295,16 @@ public class DeviceDataProvider {
      */
     protected HashMap<String, Object> getRuntimeInfo(Context c) {
         HashMap<String, Object> result = new HashMap<String, Object>();
+        ActivityManager am = (ActivityManager) c.getSystemService(Context.ACTIVITY_SERVICE);
         Runtime r = Runtime.getRuntime();
         result.put("MEMORY_MAX", r.maxMemory());
-        result.put("MEMORY_CLASS", getShouldMemory(c));
+        result.put("MEMORY_CLASS_NORMAL", am.getMemoryClass());
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            result.put("MEMORY_CLASS_LARGE", am.getLargeMemoryClass());
+        }
         result.put("CPU_AVAILABLE", r.availableProcessors());
         result.put("SUPERUSER_STATUS", RootCheck.getDeviceRoot());
         return result;
-    }
-
-    protected int getShouldMemory(Context c) {
-        ActivityManager am = (ActivityManager) c
-                .getSystemService(Context.ACTIVITY_SERVICE);
-        int memoryClass = am.getMemoryClass();
-        return memoryClass;
     }
 
     /**
