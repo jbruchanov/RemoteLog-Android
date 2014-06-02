@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
+import android.hardware.Camera;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
@@ -25,6 +26,7 @@ import com.scurab.gwt.rlw.shared.model.Device;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -243,6 +245,7 @@ public class DeviceDataProvider {
         Field[] fields = Build.class.getDeclaredFields();
         for (Field f : fields) {
             try {
+                f.setAccessible(true);
                 result.put(f.getName(), String.valueOf(f.get(null)));
             } catch (Exception e) {
                 result.put(f.getName(), e.getMessage());
@@ -251,13 +254,50 @@ public class DeviceDataProvider {
         result.putAll(getHardwareFeatures(c));
         result.putAll(getRuntimeInfo(c));
         result.putAll(getTelephonyInfo(c));
+        result.putAll(getCameraInfo(c));
         result.put("WIFI_MAC", getWifiMACAddress(c));
-        if (Build.VERSION.SDK_INT >= 14) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
             result.put("PERMANENT_MENU_KEY", ViewConfiguration.get(c).hasPermanentMenuKey());
         }
         result.put("VIRTUAL_RESOLUTION", getVirtualResolution(c));
         String s = RemoteLog.getGson().toJson(result);
         return s;
+    }
+
+    private Map<? extends String, ?> getCameraInfo(Context c) {
+        HashMap<String, Object> result = new HashMap<String, Object>();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+            int cameras = Camera.getNumberOfCameras();
+            result.put("CAMERA_COUNT", cameras);
+            Camera.CameraInfo ci = new Camera.CameraInfo();
+            boolean hasCameraPerm = c.checkCallingOrSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+            SharedPreferences sp = hasCameraPerm ? c.getSharedPreferences("RemoteLog_Cameras", Context.MODE_PRIVATE) : null;
+
+            for (int i = 0; i < cameras; i++) {
+                Camera.getCameraInfo(i, ci);
+                result.put(String.format("CAMERA_%s_FACING", i), ci.facing);
+                result.put(String.format("CAMERA_%s_ORIENTATION", i), ci.orientation);
+                if (hasCameraPerm) {
+                    String key = String.valueOf(i);
+                    String value = sp.getString(key, null);
+                    try {
+                        if (value == null) {
+                            Camera cam = Camera.open(i);
+                            value = cam.getParameters().flatten();
+                            sp.edit().putString(key, value).commit();
+                            result.put(String.format("CAMERA_%s_PARAMS", i), value);
+                            cam.release();
+                        } else {
+                            result.put(String.format("CAMERA_%s_PARAMS", i), value);
+                        }
+                    } catch (Throwable e) {
+                        sp.edit().putString(key, e.getMessage()).commit();
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+        return result;
     }
 
     /**
@@ -276,6 +316,7 @@ public class DeviceDataProvider {
             if (name.startsWith("FEATURE")) {
                 Object o = null;
                 try {
+                    f.setAccessible(true);
                     String value = String.valueOf(f.get(null));
                     o = pm.hasSystemFeature(value);
                 } catch (Exception e) {
