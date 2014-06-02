@@ -12,6 +12,7 @@ import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.text.Html;
 import android.text.TextUtils;
@@ -243,8 +244,7 @@ public final class RemoteLog {
         sSelf.mConnector = new ServiceConnector(sSelf.mServerLocation, mTrustManager, mUsername, mPassword);
 
         // init preferences
-        sSelf.mPreferences = c.getSharedPreferences(
-                RemoteLog.class.getSimpleName(), Context.MODE_PRIVATE);
+        sSelf.mPreferences = c.getSharedPreferences("RemoteLog", Context.MODE_PRIVATE);
 
         // if devId == 0 not registered yet
         sSelf.mDeviceID = sSelf.mPreferences.getInt(DEVICE_ID, 0);
@@ -305,7 +305,9 @@ public final class RemoteLog {
             device = sSelf.sendDeviceToServer(c);
             if (device != null) {
                 if(sSelf.mDeviceID == 0){
-                    new BackupManager(c).dataChanged();
+                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO) {
+                        new BackupManager(c).dataChanged();
+                    }
                 }
                 sSelf.mDeviceID = device.getDeviceID();
             }
