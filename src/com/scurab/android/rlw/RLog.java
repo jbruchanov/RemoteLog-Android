@@ -366,7 +366,9 @@ public class RLog {
                             sb.setLength(sb.length() - 2);
                         }
                     }
-                    value = String.format("%s.this.%s(%s)$AnonymousClass", encc.getSimpleName(), m.getName(), sb.toString());
+                    value = String.format("%s.this.%s(%s)$AnonClass", encc.getSimpleName(), m.getName(), sb.toString());
+                } else {
+                    value = String.format("%s.this.$AnonClass", encc.getSimpleName());
                 }
             }
         }
@@ -479,5 +481,15 @@ public class RLog {
      */
     public static void setLocalMode(boolean localmode){
         sLocalMode = localmode;
+    }
+
+    /**
+     * Block thread till queue is empty
+     */
+    public static void waitForEmptyQueue() {
+        LogSender ls = RemoteLog.getLogSender(false);
+        if (ls != null) {
+            ls.waitForEmptyQueue();
+        }
     }
 }
