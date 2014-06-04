@@ -23,11 +23,14 @@ import android.view.WindowManager;
 import com.google.android.gcm.GCMRegistrar;
 import com.scurab.gwt.rlw.shared.model.Device;
 
+import java.io.RandomAccessFile;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -49,6 +52,8 @@ public class DeviceDataProvider {
     private static int sVersion = 0;
 
     private static String sCustomDeviceUUID;
+
+    private static final double MB = 1048576.0;
 
     static {
         initVersion();
@@ -352,14 +357,59 @@ public class DeviceDataProvider {
         HashMap<String, Object> result = new HashMap<String, Object>();
         ActivityManager am = (ActivityManager) c.getSystemService(Context.ACTIVITY_SERVICE);
         Runtime r = Runtime.getRuntime();
-        result.put("MEMORY_MAX", r.maxMemory());
-        result.put("MEMORY_CLASS_NORMAL", am.getMemoryClass());
+        result.put("MEMORY_MAX", (int)(r.maxMemory() / MB));
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR) {
+            result.put("MEMORY_CLASS_NORMAL", am.getMemoryClass());
+        }
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             result.put("MEMORY_CLASS_LARGE", am.getLargeMemoryClass());
         }
+        result.put("MEMORY_DEVICE_RAM", getTotalRAM(c));
         result.put("CPU_AVAILABLE", r.availableProcessors());
         result.put("SUPERUSER_STATUS", RootCheck.getDeviceRoot());
         return result;
+    }
+
+    public int getTotalRAM(Context c) {
+        int totalMemory = -1;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            ActivityManager actManager = (ActivityManager) c.getSystemService(Context.ACTIVITY_SERVICE);
+            ActivityManager.MemoryInfo memInfo = new ActivityManager.MemoryInfo();
+            actManager.getMemoryInfo(memInfo);
+            totalMemory = (int)(memInfo.totalMem / MB);
+        } else {
+            totalMemory = getTotalRAMLinux();
+        }
+        return totalMemory;
+    }
+
+    public static int getTotalRAMLinux() {
+        RandomAccessFile reader = null;
+        String load = null;
+        double totRam = 0;
+        try {
+            reader = new RandomAccessFile("/proc/meminfo", "r");
+            load = reader.readLine();
+
+            // Get the Number value from the string
+            Pattern p = Pattern.compile("(\\d+)");
+            Matcher m = p.matcher(load);
+            String value = "";
+            while (m.find()) {
+                value = m.group(1);
+            }
+            reader.close();
+
+            totRam = Double.parseDouble(value);
+            totRam = totRam / 1024.0;
+        } catch (Exception ex) {
+            totRam = -1;
+            ex.printStackTrace();
+        } finally {
+            // Streams.close(reader);
+        }
+
+        return (int) totRam;
     }
 
     /**
