@@ -766,10 +766,7 @@ public final class RemoteLog {
                     saveStack(ts[0], stack);
                 }
 
-                RLog.send(this,
-                        isKillApp ? "KillApp"
-                                : "UncaughtException", ts[0].getMessage(),
-                        libr);
+                RLog.send(this, isKillApp ? "KillApp" : "UncaughtException", ts[0].getMessage(), libr);
 
                 sLogSender.waitForEmptyQueue();
             }
