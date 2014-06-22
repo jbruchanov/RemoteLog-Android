@@ -6,6 +6,7 @@ import com.scurab.gwt.rlw.shared.model.LogItemResponse;
 
 import java.lang.Thread.State;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -36,6 +37,8 @@ class LogSender {
 
     private LogItem mWorkingLogItem = null;
 
+    private final Object mSendingLock = new Object();
+
     public LogSender(ServiceConnector connector) {
         mConnector = connector;
         createWorkingThread();
@@ -57,19 +60,21 @@ class LogSender {
             checkPause();
             try {
                 mWorkingLogItem = mItems.take();
-                LogItemResponse lir = mConnector.saveLogItem(mWorkingLogItem);
-                //check if there is a blob for write
-                LogItemBlobRequest blob = mCoData.get(mWorkingLogItem);
-                if (lir != null && blob != null) {
-                    //set logid for blob item
-                    blob.setLogItemID(lir.getContext().getID());
-                    byte[] data = blob.getData();
-                    //save data
-                    mConnector.saveLogItemBlob(blob, data);
+                synchronized (mSendingLock) {
+                    LogItemResponse lir = mConnector.saveLogItem(mWorkingLogItem);
+                    //check if there is a blob for write
+                    LogItemBlobRequest blob = mCoData.get(mWorkingLogItem);
+                    if (lir != null && blob != null) {
+                        //set logid for blob item
+                        blob.setLogItemID(lir.getContext().getID());
+                        byte[] data = blob.getData();
+                        //save data
+                        mConnector.saveLogItemBlob(blob, data);
 
-                    if (blob.isUncaughtError()) {
-                        //delete uncaught exception => we successfuly sent
-                        RemoteLog.getInstance().clearUncaughtException();
+                        if (blob.isUncaughtError()) {
+                            //delete uncaught exception => we successfully sent
+                            RemoteLog.getInstance().clearUncaughtException();
+                        }
                     }
                 }
             } catch (Throwable e) {
@@ -159,11 +164,13 @@ class LogSender {
      * It's active waiting
      */
     public void waitForEmptyQueue() {
-        while (mItems.size() > 0 || mCoData.size() > 0 || mWorkingThread.getState() == State.RUNNABLE) {
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        synchronized (mSendingLock) {
+            while (mItems.size() > 0 || mCoData.size() > 0 || mWorkingThread.getState() == State.RUNNABLE) {
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
