@@ -167,7 +167,7 @@ class LogSender {
         synchronized (mSendingLock) {
             while (mItems.size() > 0 || mCoData.size() > 0 || mWorkingThread.getState() == State.RUNNABLE) {
                 try {
-                    Thread.sleep(50);
+                    mSendingLock.wait(50);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
