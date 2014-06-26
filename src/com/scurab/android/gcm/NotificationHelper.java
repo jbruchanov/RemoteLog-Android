@@ -23,7 +23,7 @@ class NotificationHelper {
      * manifest!
      *
      * @param context
-     * @param iconResId
+     * @param pm
      * @param subj
      * @param msg
      * @return

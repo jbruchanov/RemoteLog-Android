@@ -1,5 +1,7 @@
 package com.scurab.android.rlw;
 
+import android.util.Log;
+
 import com.google.gson.Gson;
 import com.scurab.android.Base64;
 import com.scurab.gwt.rlw.shared.model.*;
@@ -89,9 +91,10 @@ class ServiceConnector {
         String url = mUrl + REGS_URL;
         String json = mGson.toJson(d);
         // write request
-        String respond = sendRequest(json, url, HTTP_POST);
+        String response = sendRequest(json, url, HTTP_POST);
+
         // parse response
-        DeviceResponse dr = mGson.fromJson(respond, DeviceResponse.class);
+        DeviceResponse dr = mGson.fromJson(response, DeviceResponse.class);
         return dr;
     }
 
