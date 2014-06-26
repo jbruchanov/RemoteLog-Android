@@ -3,6 +3,7 @@ package com.scurab.android.rlw;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import com.scurab.android.KnowsActiveActivity;
 import com.scurab.gwt.rlw.shared.model.LogItem;
@@ -344,6 +345,9 @@ public class RLog {
     }
 
     private static String getObjectName(Object source) {
+        if (source instanceof String) {
+            return (String) source;
+        }
         String value = null;
         if (source != null) {
             value = source.getClass().getSimpleName();
