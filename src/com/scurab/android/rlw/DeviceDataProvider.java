@@ -26,7 +26,7 @@ import com.scurab.gwt.rlw.shared.model.Device;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.text.DecimalFormat;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -265,7 +265,12 @@ public class DeviceDataProvider {
         for (Field f : fields) {
             try {
                 f.setAccessible(true);
-                result.put(f.getName(), String.valueOf(f.get(null)));
+                Object value = f.get(null);
+                if (value instanceof Object[]) {
+                    result.put(f.getName(), Arrays.toString((Object[])value));
+                } else {
+                    result.put(f.getName(), String.valueOf(value));
+                }
             } catch (Exception e) {
                 result.put(f.getName(), e.getMessage());
             }
